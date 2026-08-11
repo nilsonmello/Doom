@@ -1,0 +1,46 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bd957f42eaacef64aa994a0aed4fa126, type: 3}
+  m_Name: Wapo
+  m_EditorClassIdentifier: Assembly-CSharp::WeaponData
+  weaponName: Pistol
+  isAutomatic: 0
+  pelletsPerShot: 5
+  spreadAngle: 10
+  damage: 10
+  range: 50
+  fireRate: 0.25
+  hitMask:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  useProjectile: 1
+  projectilePrefab: {fileID: 4468850921841170404, guid: e0025dc18e8cbbf43a2526c7e93a7c23, type: 3}
+  projectileSpeed: 40
+  magazineSize: 12
+  maxReserveAmmo: 60
+  reloadTime: 1.2
+  infiniteReserve: 0
+  idleSprite: {fileID: 21300000, guid: fe3c345ce93768e45a55af5395520ea0, type: 3}
+  shootFrames:
+  - {fileID: 21300000, guid: f8ac33e06a0d95645953b0dbfa750ca4, type: 3}
+  - {fileID: 21300000, guid: f8ac33e06a0d95645953b0dbfa750ca4, type: 3}
+  - {fileID: 21300000, guid: f8ac33e06a0d95645953b0dbfa750ca4, type: 3}
+  reloadFrames: []
+  shootFrameRate: 0.05
+  shootSfx: {fileID: 0}
+  reloadSfx: {fileID: 0}
+  emptySfx: {fileID: 0}
+  recoilKick: 2
+  recoilHorizontalRange: 0.4
+  shakeOnShoot: 0.05
+  shakeOnHit: 0.12
+  hitStopDuration: 0.04
