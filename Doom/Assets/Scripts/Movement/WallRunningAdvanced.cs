@@ -47,7 +47,6 @@ public class WallRunningAdvanced : MonoBehaviour
     private Rigidbody rb;
 
     [Header("UI")]
-    [Tooltip("Controlador dos sprites de mão (arma / grab / wallrun)")]
     public HandUIController handUI;
 
     private void Start()
@@ -142,9 +141,9 @@ public class WallRunningAdvanced : MonoBehaviour
         UpdateHandSide();
 
         // apply camera effects
-        // cam.DoFov(90f);
-        // if (wallLeft) cam.DoTilt(-5f);
-        // if (wallRight) cam.DoTilt(5f);
+        cam.DoFov(90f);
+        if (wallLeft) cam.DoTilt(-5f);
+        if (wallRight) cam.DoTilt(5f);
     }
 
     private void WallRunningMovement()
@@ -184,29 +183,30 @@ public class WallRunningAdvanced : MonoBehaviour
             handUI.SetWallrun(HandUIController.WallSide.None);
 
         // reset camera effects
-        //cam.DoFov(80f);
-        //cam.DoTilt(0f);
+        cam.DoFov(80f);
+        cam.DoTilt(0f);
     }
 
     private void WallJump()
     {
-        // enter exiting wall state
+        StopWallRun();
+
         exitingWall = true;
         exitWallTimer = exitWallTime;
+
+        pm.wallRunning = false; // <- adicionar isso
 
         Vector3 wallNormal = wallRight ? rightWallhit.normal : leftWallhit.normal;
 
         Vector3 forceToApply = transform.up * wallJumpUpForce + wallNormal * wallJumpSideForce;
 
-        // reset y velocity and add force
         rb.linearVelocity = new Vector3(rb.linearVelocity.x, 0f, rb.linearVelocity.z);
         rb.AddForce(forceToApply, ForceMode.Impulse);
+
+        if (handUI != null)
+            handUI.SetWallrun(HandUIController.WallSide.None);
     }
 
-    /// <summary>
-    /// Sincroniza a UI de mãos com o lado da parede detectado atualmente.
-    /// Prioriza a direita caso, por algum motivo, ambos os raios detectem parede ao mesmo tempo.
-    /// </summary>
     private void UpdateHandSide()
     {
         if (handUI == null) return;

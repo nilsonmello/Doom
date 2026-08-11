@@ -11,7 +11,6 @@ public class PlayerMovementAdvanced : MonoBehaviour
     public float slideSpeed;
     public float wallRunSpeed;
 
-
     private float desiredMoveSpeed;
     private float lastDesiredMoveSpeed;
 
@@ -39,7 +38,7 @@ public class PlayerMovementAdvanced : MonoBehaviour
     [Header("Ground Check")]
     public float playerHeight;
     public LayerMask whatIsGround;
-    bool grounded;
+    public bool grounded;
 
     [Header("Slope Handling")]
     public float maxSlopeAngle;
@@ -222,6 +221,8 @@ public class PlayerMovementAdvanced : MonoBehaviour
 
     private void MovePlayer()
     {
+        if (wallRunning) return;
+        
         // calculate movement direction
         moveDirection = orientation.forward * verticalInput + orientation.right * horizontalInput;
 
