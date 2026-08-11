@@ -349,6 +349,7 @@ MonoBehaviour:
   sensX: 400
   sensY: 400
   orientation: {fileID: 1625080230}
+  camHolder: {fileID: 171243115}
 --- !u!1 &410087039
 GameObject:
   m_ObjectHideFlags: 0
@@ -1047,9 +1048,9 @@ MonoBehaviour:
   m_GameObject: {fileID: 1510232835}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 446dd4ec7d03f5242b36615a7e5c7489, type: 3}
+  m_Script: {fileID: 11500000, guid: f42fad33918c04746a851e8b7039cd81, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::WallRunning
+  m_EditorClassIdentifier: Assembly-CSharp::WallRunningAdvanced
   whatIsWall:
     serializedVersion: 2
     m_Bits: 64
@@ -1057,13 +1058,20 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 8
   wallRunForce: 200
-  wallClimbSpeed: 5
+  wallJumpUpForce: 6
+  wallJumpSideForce: 25
+  wallClimbSpeed: 3
   maxWallRunTime: 1.5
+  jumpKey: 32
   upwardsRunKey: 101
   downwardsRunKey: 113
   wallCheckDistance: 0.7
   minJumpHeight: 2
+  exitWallTime: 0.2
+  useGravity: 0
+  gravityCounterForce: 0
   orientation: {fileID: 1625080230}
+  cam: {fileID: 330585548}
 --- !u!1 &1625080229
 GameObject:
   m_ObjectHideFlags: 0
