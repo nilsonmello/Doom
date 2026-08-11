@@ -14,6 +14,8 @@ public class WallRunningAdvanced : MonoBehaviour
     public float maxWallRunTime;
     private float wallRunTimer;
 
+    public float maxWallJumpSpeed = 25f;
+
     [Header("Input")]
     public KeyCode jumpKey = KeyCode.Space;
     public KeyCode upwardsRunKey = KeyCode.LeftShift;
@@ -35,6 +37,10 @@ public class WallRunningAdvanced : MonoBehaviour
     private bool exitingWall;
     public float exitWallTime;
     private float exitWallTimer;
+
+    [Header("Wall Switching")]
+    public float wallSwitchDotThreshold = 0.7f;
+    private Vector3 lastWallNormal;
 
     [Header("Gravity")]
     public bool useGravity;
@@ -85,6 +91,17 @@ public class WallRunningAdvanced : MonoBehaviour
 
         upwardsRunning = Input.GetKey(upwardsRunKey);
         downwardsRunning = Input.GetKey(downwardsRunKey);
+
+        if (exitingWall && (wallLeft || wallRight))
+        {
+            Vector3 currentWallNormal = wallRight ? rightWallhit.normal : leftWallhit.normal;
+
+            if (Vector3.Dot(currentWallNormal, lastWallNormal) < wallSwitchDotThreshold)
+            {
+                exitingWall = false;
+                exitWallTimer = 0f;
+            }
+        }
 
         if((wallLeft || wallRight) && verticalInput > 0 && AboveGround() && !exitingWall)
         {
@@ -144,6 +161,7 @@ public class WallRunningAdvanced : MonoBehaviour
         rb.useGravity = useGravity;
 
         Vector3 wallNormal = wallRight ? rightWallhit.normal : leftWallhit.normal;
+        lastWallNormal = wallNormal;
 
         Vector3 wallForward = Vector3.Cross(wallNormal, transform.up);
 
@@ -185,11 +203,20 @@ public class WallRunningAdvanced : MonoBehaviour
         pm.wallRunning = false;
 
         Vector3 wallNormal = wallRight ? rightWallhit.normal : leftWallhit.normal;
+        lastWallNormal = wallNormal;
 
         Vector3 forceToApply = transform.up * wallJumpUpForce + wallNormal * wallJumpSideForce;
 
         rb.linearVelocity = new Vector3(rb.linearVelocity.x, 0f, rb.linearVelocity.z);
         rb.AddForce(forceToApply, ForceMode.Impulse);
+
+        Vector3 flatVelBeforeJump = new Vector3(rb.linearVelocity.x, 0f, rb.linearVelocity.z);
+        Vector3 flatSideForce = new Vector3(wallNormal.x, 0f, wallNormal.z) * wallJumpSideForce;
+        Vector3 expectedFlatVelAfterJump = flatVelBeforeJump + flatSideForce / rb.mass;
+
+        float cappedMomentum = Mathf.Min(expectedFlatVelAfterJump.magnitude, maxWallJumpSpeed);
+
+        pm.MarkWallJumping(exitWallTime, cappedMomentum);
 
         if (handUI != null)
             handUI.SetWallrun(HandUIController.WallSide.None);

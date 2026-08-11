@@ -25,6 +25,10 @@ public class PlayerMovementAdvanced : MonoBehaviour
     public float airMultiplier;
     bool readyToJump;
 
+    [Header("Double Jump")]
+    public int maxJumps = 2;
+    private int jumpsRemaining;
+
     [Header("Crouching")]
     public float crouchSpeed;
     public float crouchYScale;
@@ -69,6 +73,10 @@ public class PlayerMovementAdvanced : MonoBehaviour
     public bool sliding;
     public bool wallRunning;
 
+    [HideInInspector] public bool wallJumping;
+    private float wallJumpSpeedCap;
+    private Coroutine wallJumpCoroutine;
+
     private void Start()
     {
         rb = GetComponent<Rigidbody>();
@@ -76,12 +84,18 @@ public class PlayerMovementAdvanced : MonoBehaviour
 
         readyToJump = true;
 
+        jumpsRemaining = maxJumps;
+
         startYScale = transform.localScale.y;
     }
 
     private void Update()
     {
+        // ground check
         grounded = Physics.Raycast(transform.position, Vector3.down, playerHeight * 0.5f + 0.2f, whatIsGround);
+
+        if (grounded)
+            jumpsRemaining = maxJumps;
 
         MyInput();
         SpeedControl();
@@ -103,9 +117,10 @@ public class PlayerMovementAdvanced : MonoBehaviour
         horizontalInput = Input.GetAxisRaw("Horizontal");
         verticalInput = Input.GetAxisRaw("Vertical");
 
-        if(Input.GetKey(jumpKey) && readyToJump && grounded)
+        if (Input.GetKeyDown(jumpKey) && readyToJump && jumpsRemaining > 0 && !wallRunning)
         {
             readyToJump = false;
+            jumpsRemaining--;
 
             Jump();
 
@@ -126,13 +141,13 @@ public class PlayerMovementAdvanced : MonoBehaviour
 
     private void StateHandler()
     {
-        if(wallRunning)
+        if (wallRunning)
         {
             state = MovementState.wallRunning;
             desiredMoveSpeed = wallRunSpeed;
         }
 
-        if (sliding)
+        else if (sliding)
         {
             state = MovementState.sliding;
 
@@ -207,7 +222,8 @@ public class PlayerMovementAdvanced : MonoBehaviour
 
     private void MovePlayer()
     {
-        if (wallRunning) return;
+        if (wallRunning)
+            return;
 
         moveDirection = orientation.forward * verticalInput + orientation.right * horizontalInput;
 
@@ -235,14 +251,15 @@ public class PlayerMovementAdvanced : MonoBehaviour
             if (rb.linearVelocity.magnitude > moveSpeed)
                 rb.linearVelocity = rb.linearVelocity.normalized * moveSpeed;
         }
-
         else
         {
             Vector3 flatVel = new Vector3(rb.linearVelocity.x, 0f, rb.linearVelocity.z);
 
-            if (flatVel.magnitude > moveSpeed)
+            float speedCap = wallJumping ? Mathf.Max(moveSpeed, wallJumpSpeedCap) : moveSpeed;
+
+            if (flatVel.magnitude > speedCap)
             {
-                Vector3 limitedVel = flatVel.normalized * moveSpeed;
+                Vector3 limitedVel = flatVel.normalized * speedCap;
                 rb.linearVelocity = new Vector3(limitedVel.x, rb.linearVelocity.y, limitedVel.z);
             }
         }
@@ -261,6 +278,33 @@ public class PlayerMovementAdvanced : MonoBehaviour
         readyToJump = true;
 
         exitingSlope = false;
+    }
+
+    public void MarkWallJumping(float duration, float momentumCap)
+    {
+        if (wallJumpCoroutine != null)
+            StopCoroutine(wallJumpCoroutine);
+
+        wallJumping = true;
+        wallJumpSpeedCap = momentumCap;
+        wallJumpCoroutine = StartCoroutine(DecayWallJumpCap(duration, momentumCap));
+    }
+
+    private IEnumerator DecayWallJumpCap(float duration, float startCap)
+    {
+        float excess = startCap - moveSpeed;
+        float time = 0f;
+
+        while (time < duration)
+        {
+            time += Time.deltaTime;
+            float t = Mathf.Clamp01(time / duration);
+            wallJumpSpeedCap = moveSpeed + excess * (1f - t);
+            yield return null;
+        }
+
+        wallJumping = false;
+        wallJumpCoroutine = null;
     }
 
     public bool OnSlope()
