@@ -29,11 +29,11 @@ MonoBehaviour:
   maxReserveAmmo: 60
   reloadTime: 1.2
   infiniteReserve: 0
-  idleSprite: {fileID: 21300000, guid: fe3c345ce93768e45a55af5395520ea0, type: 3}
+  idleSprite: {fileID: 21300000, guid: 8e8ebb08399c8d4429c8d56324a4f1f3, type: 3}
   shootFrames:
-  - {fileID: 21300000, guid: f8ac33e06a0d95645953b0dbfa750ca4, type: 3}
-  - {fileID: 21300000, guid: f8ac33e06a0d95645953b0dbfa750ca4, type: 3}
-  - {fileID: 21300000, guid: f8ac33e06a0d95645953b0dbfa750ca4, type: 3}
+  - {fileID: 21300000, guid: 11a88a85ca4c0164a960a6a39ff16b69, type: 3}
+  - {fileID: 21300000, guid: 11a88a85ca4c0164a960a6a39ff16b69, type: 3}
+  - {fileID: 21300000, guid: 11a88a85ca4c0164a960a6a39ff16b69, type: 3}
   reloadFrames: []
   shootFrameRate: 0.05
   shootSfx: {fileID: 0}

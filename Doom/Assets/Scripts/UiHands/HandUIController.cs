@@ -23,6 +23,10 @@ public class HandUIController : MonoBehaviour
     [SerializeField] private Sprite spriteWallrunDireita;
     [SerializeField] private Sprite spriteWallrunEsquerda;
 
+    [Header("Inimigo Segurado / Carga de Arremesso")]
+    [Tooltip("Imagem usada pra mostrar o sprite do inimigo agarrado. O mesmo campo também é usado como indicador de carga do arremesso, via fillAmount — configure o Image Type dela como \"Filled\" no Inspector se quiser esse preenchimento visual.")]
+    [SerializeField] private Image imagemInimigoSegurado;
+
     private Sprite spriteBaseDireita;
     private Sprite spriteBaseEsquerda;
 
@@ -41,6 +45,9 @@ public class HandUIController : MonoBehaviour
 
         AtualizarMaoDireita();
         AtualizarMaoEsquerda();
+
+        if (imagemInimigoSegurado != null)
+            imagemInimigoSegurado.enabled = false;
     }
 
     public void EquiparArma(Sprite spriteArma)
@@ -127,6 +134,45 @@ public class HandUIController : MonoBehaviour
         wallrunAtivo = lado;
         AtualizarMaoDireita();
         AtualizarMaoEsquerda();
+    }
+
+    /// <summary>
+    /// Mostra o sprite do inimigo que acabou de ser agarrado. Chamado pelo
+    /// PlayerGrabController assim que o grab acontece.
+    /// </summary>
+    public void ShowHeldEnemy(Sprite spriteInimigo)
+    {
+        if (imagemInimigoSegurado == null) return;
+
+        imagemInimigoSegurado.sprite = spriteInimigo;
+        imagemInimigoSegurado.enabled = spriteInimigo != null;
+        imagemInimigoSegurado.fillAmount = 0f;
+    }
+
+    /// <summary>
+    /// Esconde a imagem do inimigo segurado. Chamado pelo PlayerGrabController
+    /// quando o inimigo é arremessado, solto, ou deixa de estar agarrado.
+    /// </summary>
+    public void ClearHeldEnemy()
+    {
+        if (imagemInimigoSegurado == null) return;
+
+        imagemInimigoSegurado.enabled = false;
+        imagemInimigoSegurado.sprite = null;
+        imagemInimigoSegurado.fillAmount = 0f;
+    }
+
+    /// <summary>
+    /// Atualiza o preenchimento (fillAmount) da imagem do inimigo segurado
+    /// pra refletir o progresso da carga do arremesso (0 a 1). Requer que o
+    /// Image Type de imagemInimigoSegurado esteja configurado como "Filled"
+    /// no Inspector pra ter efeito visual.
+    /// </summary>
+    public void UpdateChargePercent(float percent)
+    {
+        if (imagemInimigoSegurado == null) return;
+
+        imagemInimigoSegurado.fillAmount = Mathf.Clamp01(percent);
     }
 
     private void AtualizarMaoDireita()
