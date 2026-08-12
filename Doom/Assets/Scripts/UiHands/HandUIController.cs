@@ -18,19 +18,21 @@ public class HandUIController : MonoBehaviour
     [Header("Sprites Base - Mão Esquerda")]
     [SerializeField] private Sprite spriteMaoEsquerdaVazia;
     [SerializeField] private Sprite spriteMaoEsquerdaFechada;
+    [SerializeField] private Sprite spriteMaoEsquerdaSegurandoInimigo;
 
     [Header("Sprites de Wallrun")]
     [SerializeField] private Sprite spriteWallrunDireita;
     [SerializeField] private Sprite spriteWallrunEsquerda;
 
     [Header("Inimigo Segurado / Carga de Arremesso")]
-    [Tooltip("Imagem usada pra mostrar o sprite do inimigo agarrado. O mesmo campo também é usado como indicador de carga do arremesso, via fillAmount — configure o Image Type dela como \"Filled\" no Inspector se quiser esse preenchimento visual.")]
     [SerializeField] private Image imagemInimigoSegurado;
 
     private Sprite spriteBaseDireita;
     private Sprite spriteBaseEsquerda;
 
     private WallSide wallrunAtivo = WallSide.None;
+
+    private bool segurandoInimigo;
 
     private Coroutine animacaoMaoDireitaCoroutine;
     private bool tocandoAnimacaoMaoDireita;
@@ -136,12 +138,11 @@ public class HandUIController : MonoBehaviour
         AtualizarMaoEsquerda();
     }
 
-    /// <summary>
-    /// Mostra o sprite do inimigo que acabou de ser agarrado. Chamado pelo
-    /// PlayerGrabController assim que o grab acontece.
-    /// </summary>
     public void ShowHeldEnemy(Sprite spriteInimigo)
     {
+        segurandoInimigo = true;
+        AtualizarMaoEsquerda();
+
         if (imagemInimigoSegurado == null) return;
 
         imagemInimigoSegurado.sprite = spriteInimigo;
@@ -149,12 +150,11 @@ public class HandUIController : MonoBehaviour
         imagemInimigoSegurado.fillAmount = 0f;
     }
 
-    /// <summary>
-    /// Esconde a imagem do inimigo segurado. Chamado pelo PlayerGrabController
-    /// quando o inimigo é arremessado, solto, ou deixa de estar agarrado.
-    /// </summary>
     public void ClearHeldEnemy()
     {
+        segurandoInimigo = false;
+        AtualizarMaoEsquerda();
+
         if (imagemInimigoSegurado == null) return;
 
         imagemInimigoSegurado.enabled = false;
@@ -162,12 +162,6 @@ public class HandUIController : MonoBehaviour
         imagemInimigoSegurado.fillAmount = 0f;
     }
 
-    /// <summary>
-    /// Atualiza o preenchimento (fillAmount) da imagem do inimigo segurado
-    /// pra refletir o progresso da carga do arremesso (0 a 1). Requer que o
-    /// Image Type de imagemInimigoSegurado esteja configurado como "Filled"
-    /// no Inspector pra ter efeito visual.
-    /// </summary>
     public void UpdateChargePercent(float percent)
     {
         if (imagemInimigoSegurado == null) return;
@@ -197,8 +191,17 @@ public class HandUIController : MonoBehaviour
     {
         if (imagemMaoEsquerda == null) return;
 
-        imagemMaoEsquerda.sprite = (wallrunAtivo == WallSide.Left)
-            ? spriteWallrunEsquerda
-            : spriteBaseEsquerda;
+        if (segurandoInimigo)
+        {
+            imagemMaoEsquerda.sprite = spriteMaoEsquerdaSegurandoInimigo;
+        }
+        else if (wallrunAtivo == WallSide.Left)
+        {
+            imagemMaoEsquerda.sprite = spriteWallrunEsquerda;
+        }
+        else
+        {
+            imagemMaoEsquerda.sprite = spriteBaseEsquerda;
+        }
     }
 }

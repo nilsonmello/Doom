@@ -60,13 +60,6 @@ public class EnemyAI : MonoBehaviour, IDamageable
     private Collider ownCollider;
     private Collider playerCollider;
 
-    // Escala original do inimigo, capturada uma vez no Start(). Usada pra
-    // restaurar a localScale manualmente após Grab()/Throw()/Die(), em vez
-    // de depender do recálculo automático que o SetParent(x, true) faz —
-    // esse recálculo quebra (distorce a escala, geralmente num eixo só)
-    // quando o novo pai está rotacionado e tem qualquer escala não-uniforme
-    // na hierarquia, que é o caso do holdPoint (filho da câmera, que gira
-    // constantemente com o mouse look).
     private Vector3 originalScale;
 
     public bool CanBeGrabbed => isKnockedBack && !isHeld && currentState != State.Dead;
@@ -180,11 +173,6 @@ public class EnemyAI : MonoBehaviour, IDamageable
 
         if (spriteRenderer != null) spriteRenderer.enabled = false;
 
-        // worldPositionStays: false. Evita que o Unity recalcule a
-        // localScale automaticamente pra "compensar" a escala herdada do
-        // holdPoint/câmera — esse recálculo é o que distorcia o inimigo.
-        // Posição, rotação e escala são setadas manualmente logo abaixo de
-        // qualquer forma, então não precisamos que o SetParent preserve nada.
         transform.SetParent(holdPoint, false);
         transform.localPosition = Vector3.zero;
         transform.localRotation = Quaternion.identity;
@@ -199,11 +187,6 @@ public class EnemyAI : MonoBehaviour, IDamageable
 
         isHeld = false;
 
-        // Aqui, diferente do Grab(), QUEREMOS manter a posição/rotação atual
-        // no mundo (onde o holdPoint está no instante do arremesso) — só não
-        // queremos que o Unity recalcule a escala. Por isso capturamos
-        // posição/rotação mundiais antes, desparentamos sem preservar mundo
-        // (evitando o recálculo de escala), e restauramos manualmente.
         Vector3 worldPos = transform.position;
         Quaternion worldRot = transform.rotation;
 
@@ -277,9 +260,16 @@ public class EnemyAI : MonoBehaviour, IDamageable
 
             if (Physics.Raycast(castOrigin, Vector3.down, out RaycastHit groundHit, castDistance, groundMask))
             {
-                if (nextPos.y <= groundHit.point.y)
+
+                float feetOffset = ownCollider != null
+                    ? transform.position.y - ownCollider.bounds.min.y
+                    : 0f;
+
+                float groundLevel = groundHit.point.y + feetOffset;
+
+                if (nextPos.y <= groundLevel)
                 {
-                    nextPos.y = groundHit.point.y;
+                    nextPos.y = groundLevel;
                     knockbackVelocity.y = 0f;
                     hitGround = true;
 
@@ -385,10 +375,6 @@ public class EnemyAI : MonoBehaviour, IDamageable
         {
             isHeld = false;
 
-            // Mesmo cuidado do Throw(): preserva posição/rotação mundiais
-            // manualmente e evita o recálculo automático de escala do
-            // SetParent(null, true), que também se aplicaria aqui se o
-            // inimigo morrer enquanto está sendo segurado.
             Vector3 worldPos = transform.position;
             Quaternion worldRot = transform.rotation;
 
