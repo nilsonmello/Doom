@@ -169,7 +169,10 @@ MonoBehaviour:
   attackRange: 2
   attackCooldown: 1.2
   attackDamage: 10
-  attackSprite: {fileID: 0}
+  attackFrames:
+  - {fileID: 21300000, guid: 1ab6866b0fe57604e93f182d284141d0, type: 3}
+  - {fileID: 21300000, guid: d237092a4354c52448ae325b7b43605d, type: 3}
+  attackFrameRate: 0.1
 --- !u!114 &61995803
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -222,7 +225,7 @@ MonoBehaviour:
   obstacleMask:
     serializedVersion: 2
     m_Bits: 64
-  maxHealth: 30
+  maxHealth: 300
   chaseSpeed: 3.5
   knockbackDrag: 8
   knockbackGravity: -35
@@ -238,8 +241,10 @@ MonoBehaviour:
   impactMask:
     serializedVersion: 2
     m_Bits: 72
-  deathSprite: {fileID: 21300000, guid: 276b71d7afb291847b4b8e20fe058215, type: 3}
-  deathDelay: 2
+  deathSprite: {fileID: 21300000, guid: 401bbb9a1f73c58498ee7919c6a81ddd, type: 3}
+  deathDelay: 5
+  hitSprite: {fileID: 21300000, guid: 65992f7116667f349b107ca52cec6030, type: 3}
+  hitFlashDuration: 0.1
   heldUISprite: {fileID: 21300000, guid: 276b71d7afb291847b4b8e20fe058215, type: 3}
   player: {fileID: 1510232840}
   spriteRenderer: {fileID: 61995807}
@@ -454,6 +459,7 @@ RectTransform:
   - {fileID: 1686654952}
   - {fileID: 1198768791}
   - {fileID: 1464336470}
+  - {fileID: 1594768635}
   m_Father: {fileID: 1510232840}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
@@ -482,6 +488,11 @@ MonoBehaviour:
   spriteWallrunDireita: {fileID: 21300000, guid: ca5f38b379788f146ba89a0340810490, type: 3}
   spriteWallrunEsquerda: {fileID: 21300000, guid: 66e2ecd1616fd5e449d4a0515ffd39c5, type: 3}
   imagemInimigoSegurado: {fileID: 0}
+  pontoEjecaoCapsula: {fileID: 1594768635}
+  prefabCapsula: {fileID: 4328883836967126564, guid: ac82cf2ff4e49f042a7ae3e9d5595b47, type: 3}
+  forcaEjecaoVertical: 500
+  amplitudeLateral: 150
+  variacaoForca: 0.2
   equipArma: 0
 --- !u!114 &223305291
 MonoBehaviour:
@@ -727,7 +738,7 @@ Light:
   m_GameObject: {fileID: 410087039}
   m_Enabled: 1
   serializedVersion: 12
-  m_Type: 1
+  m_Type: 3
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_Intensity: 2
   m_Range: 10
@@ -768,11 +779,11 @@ Light:
     serializedVersion: 2
     m_Bits: 4294967295
   m_RenderingLayerMask: 1
-  m_Lightmapping: 4
+  m_Lightmapping: 2
   m_LightShadowCasterMode: 0
   m_AreaSize: {x: 1, y: 1}
   m_BounceIntensity: 1
-  m_ColorTemperature: 5000
+  m_ColorTemperature: 8592
   m_UseColorTemperature: 1
   m_BoundingSphereOverride: {x: 0, y: 0, z: 0, w: 0}
   m_UseBoundingSphereOverride: 0
@@ -1932,8 +1943,8 @@ MonoBehaviour:
   weaponToDrop: {fileID: 8110598511798121834, guid: bd1f30253e5048e4c8a185edaeb3c4c5, type: 3}
   weaponPrefab: {fileID: 1598567014891505290, guid: bd1f30253e5048e4c8a185edaeb3c4c5, type: 3}
   throwSpawnForwardOffset: 1.2
-  dropHeightOffset: 1
-  throwForwardForce: 6
+  dropHeightOffset: 0.2
+  throwForwardForce: 4
   throwUpwardForce: 4
   debugMode: 1
 --- !u!136 &1510232847
@@ -1975,7 +1986,7 @@ MonoBehaviour:
   holdPoint: {fileID: 1984153739}
   cam: {fileID: 330585548}
   handUI: {fileID: 223305290}
-  playerMovement: {fileID: 0}
+  playerMovement: {fileID: 1510232844}
   holdPointImage: {fileID: 1686654953}
   autoGrabOnSlide: 1
   slideGrabSlowdown: 0.5
@@ -1983,10 +1994,10 @@ MonoBehaviour:
   enemyMask:
     serializedVersion: 2
     m_Bits: 128
-  minThrowForce: 5
-  maxThrowForce: 35
+  minThrowForce: 15
+  maxThrowForce: 50
   maxChargeTime: 2
-  throwUpwardBoost: 2
+  throwUpwardBoost: 10
   chargeCurve:
     serializedVersion: 2
     m_Curve:
@@ -2011,8 +2022,8 @@ MonoBehaviour:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
-  grabShakeAmount: 0.06
-  grabCameraPunch: -0.05
+  grabShakeAmount: 0
+  grabCameraPunch: 0
   throwShakeAmount: 0.08
   throwCameraPunch: 0.08
   throwImpactShakeAmount: 0.22
@@ -2116,6 +2127,41 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &1594768634
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1594768635}
+  m_Layer: 0
+  m_Name: ShellSpawnPoint
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!224 &1594768635
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1594768634}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 223305289}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_AnchorMin: {x: 0.5, y: 0.5}
+  m_AnchorMax: {x: 0.5, y: 0.5}
+  m_AnchoredPosition: {x: 820, y: -310}
+  m_SizeDelta: {x: 100, y: 100}
+  m_Pivot: {x: 0.5, y: 0.5}
 --- !u!1 &1625080229
 GameObject:
   m_ObjectHideFlags: 0
@@ -2425,6 +2471,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 2142623285}
+  - component: {fileID: 2142623286}
   m_Layer: 0
   m_Name: ShootPoint
   m_TagString: Untagged
@@ -2447,6 +2494,20 @@ Transform:
   m_Children: []
   m_Father: {fileID: 1510232840}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &2142623286
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2142623284}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c368dde3dbbf692459daa2fbad2714dc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::FollowCameraOffset
+  cameraTransform: {fileID: 330585546}
+  forwardOffset: 0.5
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0

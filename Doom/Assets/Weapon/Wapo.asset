@@ -21,7 +21,7 @@ MonoBehaviour:
   fireRate: 0.25
   hitMask:
     serializedVersion: 2
-    m_Bits: 4294967295
+    m_Bits: 200
   useProjectile: 1
   projectilePrefab: {fileID: 4468850921841170404, guid: e0025dc18e8cbbf43a2526c7e93a7c23, type: 3}
   projectileSpeed: 40
@@ -36,6 +36,8 @@ MonoBehaviour:
   - {fileID: 21300000, guid: 11a88a85ca4c0164a960a6a39ff16b69, type: 3}
   reloadFrames: []
   shootFrameRate: 0.05
+  droppedSprite: {fileID: 21300000, guid: 0d2246ccb7d9b804481abcf4ecc4e536, type: 3}
+  shellSprite: {fileID: 21300000, guid: b36777318eea0a34f90fddc39908a0d9, type: 3}
   shootSfx: {fileID: 0}
   reloadSfx: {fileID: 0}
   emptySfx: {fileID: 0}

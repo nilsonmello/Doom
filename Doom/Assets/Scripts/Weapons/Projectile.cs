@@ -60,12 +60,12 @@ public class Projectile : MonoBehaviour
 
         if (isDamageable)
         {
-            // var damageable = other.GetComponent<IDamageable>();
-            // if (damageable != null)
-            // {
-            //     damageable.TakeDamage(damage);
-            //     onDamageDealt?.Invoke();
-            // }
+            var damageable = other.GetComponent<IDamageable>();
+            if (damageable != null)
+            {
+                damageable.TakeDamage(damage);
+                onDamageDealt?.Invoke();
+            }
         }
 
         if (debugMode)

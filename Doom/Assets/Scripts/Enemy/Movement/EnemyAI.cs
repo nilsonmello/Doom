@@ -1,3 +1,4 @@
+using System.Collections;
 using UnityEngine;
 using UnityEngine.AI;
 
@@ -32,6 +33,12 @@ public class EnemyAI : MonoBehaviour, IDamageable
     public Sprite deathSprite;
     public float deathDelay = 2f;
 
+    [Header("Dano")]
+    [Tooltip("Sprite exibido rapidamente quando o inimigo toma dano.")]
+    public Sprite hitSprite;
+    [Tooltip("Duração em segundos que o sprite de dano fica visível antes de voltar ao normal.")]
+    public float hitFlashDuration = 0.1f;
+
     [Header("Captura")]
     public Sprite heldUISprite;
 
@@ -61,6 +68,9 @@ public class EnemyAI : MonoBehaviour, IDamageable
     private Collider playerCollider;
 
     private Vector3 originalScale;
+
+    private Coroutine hitFlashCoroutine;
+    private bool isHitFlashing;
 
     public bool CanBeGrabbed => isKnockedBack && !isHeld && currentState != State.Dead;
     public bool IsHeld => isHeld;
@@ -151,6 +161,7 @@ public class EnemyAI : MonoBehaviour, IDamageable
     {
         if (currentState == State.Dead) return;
 
+        attackBehavior?.CancelAttackAnimation();
         isKnockedBack = true;
         agent.enabled = false;
         knockbackVelocity = force;
@@ -331,7 +342,7 @@ public class EnemyAI : MonoBehaviour, IDamageable
         {
             walkAnimTimer = 0f;
             walkFrameIndex = (walkFrameIndex + 1) % walkSprites.Length;
-            spriteRenderer.sprite = walkSprites[walkFrameIndex];
+            SetSprite(walkSprites[walkFrameIndex]);
         }
     }
 
@@ -339,21 +350,73 @@ public class EnemyAI : MonoBehaviour, IDamageable
     {
         currentState = newState;
 
-        if (newState == State.Idle && spriteRenderer != null && idleSprite != null)
-            spriteRenderer.sprite = idleSprite;
+        if (newState == State.Idle && idleSprite != null)
+            SetSprite(idleSprite);
+    }
+
+    /// <summary>
+    /// Ponto único de escrita no spriteRenderer. Sistemas externos (como o ataque)
+    /// devem chamar isso em vez de escrever direto no spriteRenderer, pra respeitar
+    /// a prioridade do flash de dano.
+    /// </summary>
+    public void SetSprite(Sprite sprite)
+    {
+        if (spriteRenderer == null || sprite == null) return;
+        if (isHitFlashing) return;
+
+        spriteRenderer.sprite = sprite;
+    }
+
+    /// <summary>
+    /// Volta o sprite pro idle. Útil pra ser chamado por comportamentos externos
+    /// (como o de ataque) quando terminam sua própria animação.
+    /// </summary>
+    public void ReturnToIdleSprite()
+    {
+        if (idleSprite != null)
+            SetSprite(idleSprite);
     }
 
     public void TakeDamage(int amount)
     {
         if (currentState == State.Dead) return;
 
+        attackBehavior?.CancelAttackAnimation();
         currentHealth -= amount;
 
         if (currentState == State.Idle)
             SetState(State.Chase);
 
         if (currentHealth <= 0)
+        {
             Die();
+            return;
+        }
+
+        PlayHitFlash();
+    }
+
+    private void PlayHitFlash()
+    {
+        if (spriteRenderer == null || hitSprite == null) return;
+
+        if (hitFlashCoroutine != null)
+            StopCoroutine(hitFlashCoroutine);
+
+        hitFlashCoroutine = StartCoroutine(RotinaHitFlash());
+    }
+
+    private IEnumerator RotinaHitFlash()
+    {
+        isHitFlashing = true;
+        spriteRenderer.sprite = hitSprite;
+
+        yield return new WaitForSeconds(hitFlashDuration);
+
+        isHitFlashing = false;
+        hitFlashCoroutine = null;
+
+        ReturnToIdleSprite();
     }
 
     public void Kill()
@@ -365,6 +428,13 @@ public class EnemyAI : MonoBehaviour, IDamageable
     private void Die()
     {
         SetState(State.Dead);
+
+        if (hitFlashCoroutine != null)
+        {
+            StopCoroutine(hitFlashCoroutine);
+            hitFlashCoroutine = null;
+        }
+        isHitFlashing = false;
 
         if (agent != null && agent.enabled && agent.isOnNavMesh)
             agent.ResetPath();

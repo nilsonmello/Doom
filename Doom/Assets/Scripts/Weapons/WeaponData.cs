@@ -36,6 +36,12 @@ public class WeaponData : ScriptableObject
     public Sprite[] reloadFrames;
     public float shootFrameRate = 0.05f;
 
+    [Header("Sprite Dropado")]
+    public Sprite droppedSprite;
+
+    [Header("Cápsula Ejetada")]
+    public Sprite shellSprite;
+
     [Header("Áudio (opcional)")]
     public AudioClip shootSfx;
     public AudioClip reloadSfx;

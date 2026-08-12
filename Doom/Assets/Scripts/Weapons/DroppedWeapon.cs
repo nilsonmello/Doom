@@ -25,10 +25,15 @@ public class DroppedWeapon : MonoBehaviour
         if (spriteRenderer == null)
             spriteRenderer = GetComponent<SpriteRenderer>();
 
-        if (weaponIndex == null || weaponIndex.idleSprite == null)
+        if (weaponIndex == null)
             return;
 
-        spriteRenderer.sprite = weaponIndex.idleSprite;
+        Sprite sprite = weaponIndex.droppedSprite != null ? weaponIndex.droppedSprite : weaponIndex.idleSprite;
+
+        if (sprite == null)
+            return;
+
+        spriteRenderer.sprite = sprite;
 
         Vector2 nativeSize = spriteRenderer.sprite.bounds.size;
 

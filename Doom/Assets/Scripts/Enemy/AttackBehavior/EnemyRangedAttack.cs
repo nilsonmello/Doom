@@ -59,4 +59,9 @@ public class EnemyRangedAttack : EnemyAttackBehavior
 
         proj.Launch(direction, projectileSpeed);
     }
+
+    public override void CancelAttackAnimation()
+    {
+
+    }
 }

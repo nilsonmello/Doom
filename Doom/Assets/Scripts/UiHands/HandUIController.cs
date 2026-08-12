@@ -27,6 +27,15 @@ public class HandUIController : MonoBehaviour
     [Header("Inimigo Segurado / Carga de Arremesso")]
     [SerializeField] private Image imagemInimigoSegurado;
 
+    [Header("Ejeção de Cápsula")]
+    [Tooltip("RectTransform vazio posicionado perto da mão direita, marca de onde a cápsula sai.")]
+    [SerializeField] private RectTransform pontoEjecaoCapsula;
+    [Tooltip("Prefab com RectTransform + Image + BulletShellUI.")]
+    [SerializeField] private GameObject prefabCapsula;
+    [SerializeField] private float forcaEjecaoVertical = 500f;
+    [SerializeField] private float amplitudeLateral = 150f;
+    [SerializeField] [Range(0f, 1f)] private float variacaoForca = 0.2f;
+
     private Sprite spriteBaseDireita;
     private Sprite spriteBaseEsquerda;
 
@@ -167,6 +176,28 @@ public class HandUIController : MonoBehaviour
         if (imagemInimigoSegurado == null) return;
 
         imagemInimigoSegurado.fillAmount = Mathf.Clamp01(percent);
+    }
+
+    /// <summary>
+    /// Instancia e lança uma cápsula de bala na UI, saindo do ponto de ejeção
+    /// configurado, com uma curva aleatória pra esquerda/direita.
+    /// </summary>
+    public void EjectShell(Sprite shellSprite)
+    {
+        if (prefabCapsula == null || pontoEjecaoCapsula == null) return;
+
+        GameObject obj = Instantiate(prefabCapsula, pontoEjecaoCapsula.parent);
+
+        RectTransform objRect = obj.GetComponent<RectTransform>();
+        if (objRect != null)
+            objRect.anchoredPosition = pontoEjecaoCapsula.anchoredPosition;
+
+        Image img = obj.GetComponent<Image>();
+        if (img != null && shellSprite != null)
+            img.sprite = shellSprite;
+
+        BulletShellUI shell = obj.GetComponent<BulletShellUI>();
+        shell?.Launch(forcaEjecaoVertical, amplitudeLateral, variacaoForca);
     }
 
     private void AtualizarMaoDireita()

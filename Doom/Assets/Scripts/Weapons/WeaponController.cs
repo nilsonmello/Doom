@@ -161,6 +161,8 @@ public class WeaponController : MonoBehaviour
 
         if (weapon.shootSfx != null) audioSource.PlayOneShot(weapon.shootSfx);
 
+        handUI?.EjectShell(weapon.shellSprite);
+
         //playerMovement?.AddRecoil(weapon.recoilKick, weapon.recoilHorizontalRange);
         //playerMovement?.AddScreenShake(weapon.shakeOnShoot);
 
