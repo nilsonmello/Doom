@@ -16,6 +16,9 @@ public class WallRunningAdvanced : MonoBehaviour
 
     public float maxWallJumpSpeed = 25f;
 
+    [Header("Câmera")]
+    public float wallRunCameraOffset = 0.15f;
+
     [Header("Input")]
     public KeyCode jumpKey = KeyCode.Space;
     public KeyCode upwardsRunKey = KeyCode.LeftShift;
@@ -152,8 +155,16 @@ public class WallRunningAdvanced : MonoBehaviour
         UpdateHandSide();
 
         cam.DoFov(90f);
-        if (wallLeft) cam.DoTilt(-5f);
-        if (wallRight) cam.DoTilt(5f);
+        if (wallLeft)
+        {
+            cam.DoTilt(-5f);
+            cam.DoWallRunOffset(leftWallhit.normal, wallRunCameraOffset);
+        }
+        if (wallRight)
+        {
+            cam.DoTilt(5f);
+            cam.DoWallRunOffset(rightWallhit.normal, wallRunCameraOffset);
+        }
     }
 
     private void WallRunningMovement()
@@ -191,6 +202,7 @@ public class WallRunningAdvanced : MonoBehaviour
 
         cam.DoFov(80f);
         cam.DoTilt(0f);
+        cam.ResetWallRunOffset();
     }
 
     private void WallJump()
