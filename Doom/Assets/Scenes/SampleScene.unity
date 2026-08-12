@@ -204,8 +204,8 @@ BoxCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Size: {x: 4.98, y: 5.58, z: 0.2}
-  m_Center: {x: 0, y: 0, z: 0}
+  m_Size: {x: 10.009828, y: 10.723978, z: 0.2}
+  m_Center: {x: 0.10902134, y: -0.060008205, z: 0}
 --- !u!114 &61995805
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -238,12 +238,12 @@ MonoBehaviour:
   impactMask:
     serializedVersion: 2
     m_Bits: 72
-  deathSprite: {fileID: 21300000, guid: 2bcd1d086d57b8746bfeadaf8d082961, type: 3}
+  deathSprite: {fileID: 21300000, guid: 276b71d7afb291847b4b8e20fe058215, type: 3}
   deathDelay: 2
-  heldUISprite: {fileID: 21300000, guid: 2bcd1d086d57b8746bfeadaf8d082961, type: 3}
+  heldUISprite: {fileID: 21300000, guid: 276b71d7afb291847b4b8e20fe058215, type: 3}
   player: {fileID: 1510232840}
   spriteRenderer: {fileID: 61995807}
-  idleSprite: {fileID: 21300000, guid: 2bcd1d086d57b8746bfeadaf8d082961, type: 3}
+  idleSprite: {fileID: 21300000, guid: 276b71d7afb291847b4b8e20fe058215, type: 3}
   walkSprites: []
   agent: {fileID: 61995806}
 --- !u!195 &61995806
@@ -317,7 +317,7 @@ SpriteRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_MaskInteraction: 0
-  m_Sprite: {fileID: 21300000, guid: 2bcd1d086d57b8746bfeadaf8d082961, type: 3}
+  m_Sprite: {fileID: 21300000, guid: 276b71d7afb291847b4b8e20fe058215, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
@@ -336,8 +336,8 @@ Transform:
   m_GameObject: {fileID: 61995800}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 10.54, y: 2.02, z: 7.988}
-  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalPosition: {x: 12.9331, y: 0.6269, z: 7.99}
+  m_LocalScale: {x: 0.2035707, y: 0.2035707, z: 0.2035707}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
@@ -451,9 +451,9 @@ RectTransform:
   m_LocalScale: {x: 0, y: 0, z: 0}
   m_ConstrainProportionsScale: 0
   m_Children:
-  - {fileID: 1464336470}
   - {fileID: 1686654952}
   - {fileID: 1198768791}
+  - {fileID: 1464336470}
   m_Father: {fileID: 1510232840}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
@@ -478,6 +478,7 @@ MonoBehaviour:
   spriteMaoDireitaVazia: {fileID: 21300000, guid: 299bdd13d0e16a244a7ccadae572cc97, type: 3}
   spriteMaoEsquerdaVazia: {fileID: 21300000, guid: b287fe8d4b3937d448c574410496f698, type: 3}
   spriteMaoEsquerdaFechada: {fileID: 21300000, guid: 76525b59d4cc4dd41ba0d4931ce1bf97, type: 3}
+  spriteMaoEsquerdaSegurandoInimigo: {fileID: 21300000, guid: 76525b59d4cc4dd41ba0d4931ce1bf97, type: 3}
   spriteWallrunDireita: {fileID: 21300000, guid: ca5f38b379788f146ba89a0340810490, type: 3}
   spriteWallrunEsquerda: {fileID: 21300000, guid: 66e2ecd1616fd5e449d4a0515ffd39c5, type: 3}
   imagemInimigoSegurado: {fileID: 0}
@@ -1897,6 +1898,7 @@ MonoBehaviour:
   wallClimbSpeed: 3
   maxWallRunTime: 2
   maxWallJumpSpeed: 25
+  wallRunCameraOffset: 0.15
   jumpKey: 32
   upwardsRunKey: 101
   downwardsRunKey: 113
@@ -1973,6 +1975,7 @@ MonoBehaviour:
   holdPoint: {fileID: 1984153739}
   cam: {fileID: 330585548}
   handUI: {fileID: 223305290}
+  playerMovement: {fileID: 0}
   holdPointImage: {fileID: 1686654953}
   autoGrabOnSlide: 1
   slideGrabSlowdown: 0.5
@@ -2170,7 +2173,7 @@ RectTransform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1686654951}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 34}
+  m_LocalPosition: {x: 0, y: 0, z: -23}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -2178,8 +2181,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -737.77844, y: -317.77844}
-  m_SizeDelta: {x: 416.4431, y: 416.4431}
+  m_AnchoredPosition: {x: -634, y: -207}
+  m_SizeDelta: {x: 464.0634, y: 464.0634}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1686654953
 MonoBehaviour:
@@ -2188,7 +2191,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1686654951}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
   m_Name: 
