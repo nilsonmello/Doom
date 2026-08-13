@@ -156,6 +156,11 @@ public class WallRunningAdvanced : MonoBehaviour
 
         rb.linearVelocity = new Vector3(rb.linearVelocity.x, 0f, rb.linearVelocity.z);
 
+        // Pousar numa parede pra correr nela conta como "voltar ao chão" pra
+        // efeitos de pulo: restaura o pulo duplo do mesmo jeito que aterrissar
+        // no chão restaura.
+        pm.RefreshJumps();
+
         UpdateHandSide();
 
         cam.DoFov(90f);

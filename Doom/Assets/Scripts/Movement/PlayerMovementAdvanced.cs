@@ -104,11 +104,18 @@ public class PlayerMovementAdvanced : MonoBehaviour
         bool justLanded = grounded && !groundedLastFrame;
         groundedLastFrame = grounded;
 
-        if (grounded)
+        // O reset de jumpsRemaining precisa acontecer só no frame exato da
+        // transição pro chão (justLanded), não em todo frame com grounded==true.
+        // Um AddForce(Impulse) de pulo só move o Rigidbody de fato no próximo
+        // passo de física, então por 1+ frame(s) logo após apertar pulo o
+        // raycast de grounded ainda pode continuar batendo no chão — resetando
+        // o jumpsRemaining que você acabou de gastar antes mesmo de sair do
+        // chão, e dando um pulo "extra" fantasma.
+        if (justLanded)
         {
             jumpsRemaining = maxJumps;
 
-            if (justLanded && wallJumping)
+            if (wallJumping)
                 StartWallJumpLandingDecay();
         }
 
@@ -296,6 +303,17 @@ public class PlayerMovementAdvanced : MonoBehaviour
         readyToJump = true;
 
         exitingSlope = false;
+    }
+
+    /// <summary>
+    /// Restaura os pulos disponíveis (incluindo o pulo duplo) como se o player
+    /// tivesse tocado o chão. Chamado pelo WallRunningAdvanced ao entrar em um
+    /// wall run, já que pousar numa parede pra correr nela deve "resetar" o
+    /// aéreo do mesmo jeito que pousar no chão reseta.
+    /// </summary>
+    public void RefreshJumps()
+    {
+        jumpsRemaining = maxJumps;
     }
 
     public void MarkWallJumping(float momentumCap)
