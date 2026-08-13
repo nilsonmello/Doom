@@ -19,6 +19,8 @@ public class PlayerMovementAdvanced : MonoBehaviour
 
     public float groundDrag;
 
+    public float groundDragRampSpeed = 15f;
+
     [Header("Jumping")]
     public float jumpForce;
     public float jumpCooldown;
@@ -48,7 +50,8 @@ public class PlayerMovementAdvanced : MonoBehaviour
     public float maxSlopeAngle;
     private RaycastHit slopeHit;
     private bool exitingSlope;
-    
+
+    public PlayerCam cam;
 
     public Transform orientation;
 
@@ -75,7 +78,12 @@ public class PlayerMovementAdvanced : MonoBehaviour
 
     [HideInInspector] public bool wallJumping;
     private float wallJumpSpeedCap;
-    private Coroutine wallJumpCoroutine;
+
+    [Header("Wall Jump Landing Decay")]
+    public float wallJumpLandingDecayTime = 0.25f;
+    private Coroutine wallJumpLandingDecayCoroutine;
+    private bool groundedLastFrame;
+    private Coroutine moveSpeedLerpCoroutine;
 
     private void Start()
     {
@@ -91,20 +99,26 @@ public class PlayerMovementAdvanced : MonoBehaviour
 
     private void Update()
     {
-        // ground check
         grounded = Physics.Raycast(transform.position, Vector3.down, playerHeight * 0.5f + 0.2f, whatIsGround);
 
+        bool justLanded = grounded && !groundedLastFrame;
+        groundedLastFrame = grounded;
+
         if (grounded)
+        {
             jumpsRemaining = maxJumps;
 
-        MyInput();
-        SpeedControl();
-        StateHandler();
+            if (justLanded && wallJumping)
+                StartWallJumpLandingDecay();
+        }
 
-        if (grounded)
-            rb.linearDamping = groundDrag;
-        else
-            rb.linearDamping = 0;
+        MyInput();
+
+        StateHandler();
+        SpeedControl();
+
+        float targetDrag = grounded ? groundDrag : 0f;
+        rb.linearDamping = Mathf.MoveTowards(rb.linearDamping, targetDrag, groundDragRampSpeed * Time.deltaTime);
     }
 
     private void FixedUpdate()
@@ -164,14 +178,16 @@ public class PlayerMovementAdvanced : MonoBehaviour
             desiredMoveSpeed = crouchSpeed;
         }
 
-        else if(grounded && Input.GetKey(sprintKey))
+        else if(grounded && !wallRunning && Input.GetKey(sprintKey))
         {
+            cam.DoFov(90f);
             state = MovementState.sprinting;
             desiredMoveSpeed = sprintSpeed;
         }
 
         else if (grounded)
         {
+            cam.DoFov(80f);
             state = MovementState.walking;
             desiredMoveSpeed = walkSpeed;
         }
@@ -183,8 +199,10 @@ public class PlayerMovementAdvanced : MonoBehaviour
 
         if(Mathf.Abs(desiredMoveSpeed - lastDesiredMoveSpeed) > 4f && moveSpeed != 0)
         {
-            StopAllCoroutines();
-            StartCoroutine(SmoothlyLerpMoveSpeed());
+            if (moveSpeedLerpCoroutine != null)
+                StopCoroutine(moveSpeedLerpCoroutine);
+
+            moveSpeedLerpCoroutine = StartCoroutine(SmoothlyLerpMoveSpeed());
         }
         else
         {
@@ -280,31 +298,43 @@ public class PlayerMovementAdvanced : MonoBehaviour
         exitingSlope = false;
     }
 
-    public void MarkWallJumping(float duration, float momentumCap)
+    public void MarkWallJumping(float momentumCap)
     {
-        if (wallJumpCoroutine != null)
-            StopCoroutine(wallJumpCoroutine);
+        if (wallJumpLandingDecayCoroutine != null)
+        {
+            StopCoroutine(wallJumpLandingDecayCoroutine);
+            wallJumpLandingDecayCoroutine = null;
+        }
 
         wallJumping = true;
         wallJumpSpeedCap = momentumCap;
-        wallJumpCoroutine = StartCoroutine(DecayWallJumpCap(duration, momentumCap));
     }
 
-    private IEnumerator DecayWallJumpCap(float duration, float startCap)
+    private void StartWallJumpLandingDecay()
     {
-        float excess = startCap - moveSpeed;
+        if (wallJumpLandingDecayCoroutine != null)
+            StopCoroutine(wallJumpLandingDecayCoroutine);
+
+        wallJumpLandingDecayCoroutine = StartCoroutine(WallJumpLandingDecay());
+    }
+
+    private IEnumerator WallJumpLandingDecay()
+    {
+        float startCap = wallJumpSpeedCap;
         float time = 0f;
 
-        while (time < duration)
+        while (time < wallJumpLandingDecayTime)
         {
             time += Time.deltaTime;
-            float t = Mathf.Clamp01(time / duration);
-            wallJumpSpeedCap = moveSpeed + excess * (1f - t);
+            float t = Mathf.Clamp01(time / wallJumpLandingDecayTime);
+
+            wallJumpSpeedCap = Mathf.Lerp(startCap, moveSpeed, t);
+
             yield return null;
         }
 
         wallJumping = false;
-        wallJumpCoroutine = null;
+        wallJumpLandingDecayCoroutine = null;
     }
 
     public bool OnSlope()

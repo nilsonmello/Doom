@@ -23,6 +23,11 @@ public class Sliding : MonoBehaviour
     private float horizontalInput;
     private float verticalInput;
 
+    [Header("Slide Buffer")]
+    public float slideBufferTime = 0.15f;
+    private float slideBufferTimer;
+
+    public PlayerCam cam;
 
     private void Start()
     {
@@ -37,10 +42,30 @@ public class Sliding : MonoBehaviour
         horizontalInput = Input.GetAxisRaw("Horizontal");
         verticalInput = Input.GetAxisRaw("Vertical");
 
-        if (Input.GetKeyDown(slideKey) && (horizontalInput != 0 || verticalInput != 0) && pm.grounded)
-            StartSlide();
+        if (Input.GetKeyDown(slideKey))
+        {
+            if (pm.grounded && (horizontalInput != 0 || verticalInput != 0))
+            {
+                StartSlide();
+            }
+            else
+            {
+                slideBufferTimer = slideBufferTime;
+            }
+        }
 
-        if (Input.GetKeyUp(slideKey) && pm.sliding)
+        if (slideBufferTimer > 0f)
+        {
+            slideBufferTimer -= Time.deltaTime;
+
+            if (pm.grounded && !pm.sliding && (horizontalInput != 0 || verticalInput != 0))
+            {
+                StartSlide();
+                slideBufferTimer = 0f;
+            }
+        }
+
+        if (pm.sliding && !Input.GetKey(slideKey))
             StopSlide();
     }
 
@@ -53,6 +78,8 @@ public class Sliding : MonoBehaviour
     private void StartSlide()
     {
         pm.sliding = true;
+
+        cam.DoFov(100f);
 
         playerObj.localScale = new Vector3(playerObj.localScale.x, slideYScale, playerObj.localScale.z);
         rb.AddForce(Vector3.down * 5f, ForceMode.Impulse);
@@ -84,6 +111,7 @@ public class Sliding : MonoBehaviour
     {
         pm.sliding = false;
 
+        cam.DoFov(80f);
         playerObj.localScale = new Vector3(playerObj.localScale.x, startYScale, playerObj.localScale.z);
     }
 }

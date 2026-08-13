@@ -16,6 +16,10 @@ public class WallRunningAdvanced : MonoBehaviour
 
     public float maxWallJumpSpeed = 25f;
 
+    [Header("Directional Control")]
+    [Range(0f, 1f)]
+    public float wallJumpLookInfluence = 0.5f;
+
     [Header("Câmera")]
     public float wallRunCameraOffset = 0.15f;
 
@@ -217,18 +221,18 @@ public class WallRunningAdvanced : MonoBehaviour
         Vector3 wallNormal = wallRight ? rightWallhit.normal : leftWallhit.normal;
         lastWallNormal = wallNormal;
 
-        Vector3 forceToApply = transform.up * wallJumpUpForce + wallNormal * wallJumpSideForce;
+        Vector3 preservedFlatVelocity = new Vector3(rb.linearVelocity.x, 0f, rb.linearVelocity.z);
 
-        rb.linearVelocity = new Vector3(rb.linearVelocity.x, 0f, rb.linearVelocity.z);
-        rb.AddForce(forceToApply, ForceMode.Impulse);
+        Vector3 sideBoost = new Vector3(wallNormal.x, 0f, wallNormal.z) * wallJumpSideForce / rb.mass;
+        float upBoost = wallJumpUpForce / rb.mass;
 
-        Vector3 flatVelBeforeJump = new Vector3(rb.linearVelocity.x, 0f, rb.linearVelocity.z);
-        Vector3 flatSideForce = new Vector3(wallNormal.x, 0f, wallNormal.z) * wallJumpSideForce;
-        Vector3 expectedFlatVelAfterJump = flatVelBeforeJump + flatSideForce / rb.mass;
+        Vector3 finalFlatVelocity = preservedFlatVelocity + sideBoost;
 
-        float cappedMomentum = Mathf.Min(expectedFlatVelAfterJump.magnitude, maxWallJumpSpeed);
+        rb.linearVelocity = new Vector3(finalFlatVelocity.x, upBoost, finalFlatVelocity.z);
 
-        pm.MarkWallJumping(exitWallTime, cappedMomentum);
+        float cappedMomentum = Mathf.Min(finalFlatVelocity.magnitude, maxWallJumpSpeed);
+
+        pm.MarkWallJumping(cappedMomentum);
 
         if (handUI != null)
             handUI.SetWallrun(HandUIController.WallSide.None);

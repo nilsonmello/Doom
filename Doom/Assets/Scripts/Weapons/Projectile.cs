@@ -58,15 +58,19 @@ public class Projectile : MonoBehaviour
 
         hasHit = true;
 
-        if (isDamageable)
-        {
-            var damageable = other.GetComponent<IDamageable>();
-            if (damageable != null)
-            {
-                damageable.TakeDamage(damage);
-                onDamageDealt?.Invoke();
-            }
-        }
+if (isDamageable)
+{
+    var damageable = other.GetComponentInParent<IDamageable>();
+    if (damageable != null)
+    {
+        damageable.TakeDamage(damage);
+        onDamageDealt?.Invoke();
+    }
+    else if (debugMode)
+    {
+        Debug.LogWarning($"Hit {other.name} no hitMask mas sem IDamageable acessível (nem no próprio nem nos pais)", other);
+    }
+}
 
         if (debugMode)
             Debug.Log($"Projectile hit {other.name} (damageable={isDamageable}, solid={isSolid})", other);

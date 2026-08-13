@@ -18,17 +18,14 @@ MonoBehaviour:
   spreadAngle: 10
   damage: 10
   range: 50
-  fireRate: 0.25
+  fireRate: 0.5
   hitMask:
     serializedVersion: 2
     m_Bits: 200
-  useProjectile: 1
-  projectilePrefab: {fileID: 4468850921841170404, guid: e0025dc18e8cbbf43a2526c7e93a7c23, type: 3}
-  projectileSpeed: 40
   magazineSize: 12
   maxReserveAmmo: 60
   reloadTime: 1.2
-  infiniteReserve: 0
+  infiniteReserve: 1
   idleSprite: {fileID: 21300000, guid: 8e8ebb08399c8d4429c8d56324a4f1f3, type: 3}
   shootFrames:
   - {fileID: 21300000, guid: 11a88a85ca4c0164a960a6a39ff16b69, type: 3}

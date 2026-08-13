@@ -245,7 +245,7 @@ MonoBehaviour:
   deathDelay: 5
   hitSprite: {fileID: 21300000, guid: 65992f7116667f349b107ca52cec6030, type: 3}
   hitFlashDuration: 0.1
-  heldUISprite: {fileID: 21300000, guid: 276b71d7afb291847b4b8e20fe058215, type: 3}
+  heldUISprite: {fileID: 21300000, guid: d1ffd87b1fabdda48a294ed185137e44, type: 3}
   player: {fileID: 1510232840}
   spriteRenderer: {fileID: 61995807}
   idleSprite: {fileID: 21300000, guid: 276b71d7afb291847b4b8e20fe058215, type: 3}
@@ -1844,8 +1844,10 @@ MonoBehaviour:
   playerObj: {fileID: 1510232840}
   maxSlideTime: 0.75
   slideForce: 500
-  slideYScale: 0.5
+  slideYScale: 0.7
   slideKey: 306
+  slideBufferTime: 0.15
+  cam: {fileID: 330585548}
 --- !u!114 &1510232844
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1859,16 +1861,17 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerMovementAdvanced
   walkSpeed: 3
-  sprintSpeed: 15
+  sprintSpeed: 8
   slideSpeed: 8
   wallRunSpeed: 5
   speedIncreaseMultiplier: 20
   slopeIncreaseMultiplier: 2
-  groundDrag: 8
-  jumpForce: 9
+  groundDrag: 1
+  groundDragRampSpeed: 15
+  jumpForce: 7
   jumpCooldown: 0.2
   airMultiplier: 1
-  maxJumps: 2
+  maxJumps: 1
   crouchSpeed: 2
   crouchYScale: 0.5
   jumpKey: 32
@@ -1880,11 +1883,13 @@ MonoBehaviour:
     m_Bits: 8
   grounded: 0
   maxSlopeAngle: 40
+  cam: {fileID: 330585548}
   orientation: {fileID: 1625080230}
   state: 0
   sliding: 0
   wallRunning: 0
   wallJumping: 0
+  wallJumpLandingDecayTime: 0.25
 --- !u!114 &1510232845
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1903,12 +1908,13 @@ MonoBehaviour:
   whatIsGround:
     serializedVersion: 2
     m_Bits: 8
-  wallRunForce: 500
-  wallJumpUpForce: 6
+  wallRunForce: 450
+  wallJumpUpForce: 8
   wallJumpSideForce: 10
-  wallClimbSpeed: 3
+  wallClimbSpeed: 0.1
   maxWallRunTime: 2
   maxWallJumpSpeed: 25
+  wallJumpLookInfluence: 0.579
   wallRunCameraOffset: 0.15
   jumpKey: 32
   upwardsRunKey: 101
@@ -1947,6 +1953,7 @@ MonoBehaviour:
   throwForwardForce: 4
   throwUpwardForce: 4
   debugMode: 1
+  debugLineDuration: 1
 --- !u!136 &1510232847
 CapsuleCollider:
   m_ObjectHideFlags: 0

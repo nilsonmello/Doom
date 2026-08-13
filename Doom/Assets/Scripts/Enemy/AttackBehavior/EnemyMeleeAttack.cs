@@ -8,7 +8,9 @@ public class EnemyMeleeAttack : EnemyAttackBehavior
     public int attackDamage = 10;
 
     [Header("Animação de Ataque")]
+    [Tooltip("Sequência de sprites tocada do início ao fim de cada ataque.")]
     public Sprite[] attackFrames;
+    [Tooltip("Tempo em segundos que cada frame fica na tela.")]
     public float attackFrameRate = 0.08f;
 
     private float lastAttackTime;
@@ -56,9 +58,14 @@ public class EnemyMeleeAttack : EnemyAttackBehavior
     {
         foreach (var frame in attackFrames)
         {
-            if (self != null)
-                self.SetSprite(frame);
+            // Espera o flash de dano terminar antes de aplicar o frame, em vez de
+            // deixar o SetSprite descartar a chamada silenciosamente e perder o frame.
+            while (self != null && self.IsHitFlashing)
+                yield return null;
 
+            if (self == null) yield break;
+
+            self.SetSprite(frame);
             yield return new WaitForSeconds(attackFrameRate);
         }
 

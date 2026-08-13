@@ -13,16 +13,12 @@ public class WeaponData : ScriptableObject
     [Header("Spread")]
     public float spreadAngle = 0f;
 
-    [Header("Combate")]
+    [Header("Combate (Hitscan)")]
     public int damage = 10;
     public float range = 50f;
     public float fireRate = 0.25f;
+    [Tooltip("Deve incluir todas as layers que o tiro pode atingir: inimigos E ambiente/paredes. Não inclua a layer do Player.")]
     public LayerMask hitMask = ~0;
-
-    [Header("Tipo de Tiro")]
-    public bool useProjectile = false;
-    public GameObject projectilePrefab;
-    public float projectileSpeed = 40f;
 
     [Header("Munição")]
     public int magazineSize = 12;

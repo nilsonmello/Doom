@@ -76,6 +76,13 @@ public class EnemyAI : MonoBehaviour, IDamageable
     public bool IsHeld => isHeld;
     public bool CanBlockDamage => catchBehavior != null && catchBehavior.BlocksDamage;
 
+    /// <summary>
+    /// True enquanto o flash de dano estiver ativo. Sistemas externos (como animações
+    /// de ataque) devem checar isso antes de escrever sprites, pra não perder frames
+    /// silenciosamente via SetSprite.
+    /// </summary>
+    public bool IsHitFlashing => isHitFlashing;
+
     public event System.Action<Collider, RaycastHit> OnThrowImpact;
 
     private float AttackRange => attackBehavior != null ? attackBehavior.attackRange : 0f;
@@ -435,6 +442,8 @@ public class EnemyAI : MonoBehaviour, IDamageable
             hitFlashCoroutine = null;
         }
         isHitFlashing = false;
+
+        attackBehavior?.CancelAttackAnimation();
 
         if (agent != null && agent.enabled && agent.isOnNavMesh)
             agent.ResetPath();

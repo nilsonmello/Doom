@@ -22,6 +22,7 @@ public class WeaponController : MonoBehaviour
 
     [Header("Debug")]
     public bool debugMode = true;
+    public float debugLineDuration = 1f;
 
     private enum WeaponState { Idle, Shooting, Reloading }
     private WeaponState state = WeaponState.Idle;
@@ -156,7 +157,7 @@ public class WeaponController : MonoBehaviour
 
         for (int i = 0; i < pellets; i++)
         {
-            FireProjectile();
+            FireHitscan();
         }
 
         if (weapon.shootSfx != null) audioSource.PlayOneShot(weapon.shootSfx);
@@ -186,36 +187,38 @@ public class WeaponController : MonoBehaviour
         return Quaternion.LookRotation(direction) * spreadDir;
     }
 
-    private void FireProjectile()
+    private void FireHitscan()
     {
-        if (weapon.projectilePrefab == null)
-        {
-            return;
-        }
-
+        Vector3 origin = playerCamera.transform.position;
         Vector3 shootDirection = ApplySpread(playerCamera.transform.forward, weapon.spreadAngle);
 
-        GameObject obj = Instantiate(weapon.projectilePrefab, muzzlePoint.position, Quaternion.LookRotation(shootDirection));
-        Projectile proj = obj.GetComponent<Projectile>();
+        bool didHit = Physics.Raycast(
+            origin,
+            shootDirection,
+            out RaycastHit hit,
+            weapon.range,
+            weapon.hitMask,
+            QueryTriggerInteraction.Collide
+        );
 
-        if (proj != null)
+        if (didHit)
         {
-            proj.damage = weapon.damage;
-            proj.hitMask = weapon.hitMask;
-            proj.debugMode = debugMode;
-            proj.ownerRoot = transform.root;
-
-            float capturedShakeOnHit = weapon.shakeOnHit;
-            float capturedHitStop = weapon.hitStopDuration;
-            PlayerMovementAdvanced capturedMovement = playerMovement;
-
-            proj.onDamageDealt = () =>
+            var damageable = hit.collider.GetComponentInParent<IDamageable>();
+            if (damageable != null)
             {
+                damageable.TakeDamage(weapon.damage);
+
+                float capturedShakeOnHit = weapon.shakeOnHit;
+                float capturedHitStop = weapon.hitStopDuration;
+                PlayerMovementAdvanced capturedMovement = playerMovement;
+
                 //capturedMovement?.AddScreenShake(capturedShakeOnHit);
                 //HitStopManager.Request(capturedHitStop);
-            };
-
-            proj.Launch(shootDirection, weapon.projectileSpeed);
+            }
+        }
+        else if (debugMode)
+        {
+            Debug.DrawLine(origin, origin + shootDirection * weapon.range, Color.yellow, debugLineDuration);
         }
     }
 
