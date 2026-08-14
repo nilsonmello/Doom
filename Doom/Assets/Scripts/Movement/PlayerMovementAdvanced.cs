@@ -2,135 +2,118 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
+[RequireComponent(typeof(CharacterController))]
 public class PlayerMovementAdvanced : MonoBehaviour
 {
-    [Header("Movement")]
-    private float moveSpeed;
-    public float walkSpeed;
-    public float sprintSpeed;
-    public float slideSpeed;
-    public float wallRunSpeed;
+    [Header("References")]
+    public CharacterController controller;
+    public PlayerCam cam;
+    public Transform orientation;
 
-    private float desiredMoveSpeed;
-    private float lastDesiredMoveSpeed;
+    [Header("Movement Speeds")]
+    public float walkSpeed = 6f;
+    public float sprintSpeed = 9f;
+    public float crouchSpeed = 3f;
+    public float wallRunSpeed = 8f;
+    public float slideSpeed = 12f;
 
-    public float speedIncreaseMultiplier;
-    public float slopeIncreaseMultiplier;
+    [Header("Ground / Air Acceleration")]
+    public float groundAcceleration = 45f;
+    public float groundDeceleration = 55f;
+    public float groundStopDeceleration = 40f;
+    public float airAcceleration = 20f;
+    public float airTurnRate = 6f;
 
-    public float groundDrag;
-
-    public float groundDragRampSpeed = 15f;
-
-    [Header("Jumping")]
-    public float jumpForce;
-    public float jumpCooldown;
-    public float airMultiplier;
-    bool readyToJump;
+    [Header("Gravity & Jump")]
+    public float gravity = -25f;
+    public float jumpForce = 9f;
+    public float jumpCooldown = 0.2f;
+    private bool readyToJump = true;
 
     [Header("Double Jump")]
     public int maxJumps = 2;
     private int jumpsRemaining;
 
     [Header("Crouching")]
-    public float crouchSpeed;
-    public float crouchYScale;
-    private float startYScale;
+    public KeyCode crouchKey = KeyCode.LeftControl;
+    [Range(0.1f, 1f)] public float crouchHeightScale = 0.5f;
+    public float crouchTransitionSpeed = 10f;
+    public LayerMask ceilingMask;
+    [HideInInspector] public bool crouching;
+    private float standingHeight;
+
+    [Header("Slope Handling")]
+    public float maxSlopeAngle = 40f;
+    private RaycastHit slopeHit;
 
     [Header("Keybinds")]
     public KeyCode jumpKey = KeyCode.Space;
     public KeyCode sprintKey = KeyCode.LeftShift;
-    public KeyCode crouchKey = KeyCode.LeftControl;
 
-    [Header("Ground Check")]
-    public float playerHeight;
-    public LayerMask whatIsGround;
-    public bool grounded;
-
-    [Header("Slope Handling")]
-    public float maxSlopeAngle;
-    private RaycastHit slopeHit;
-    private bool exitingSlope;
-
-    public PlayerCam cam;
-
-    public Transform orientation;
-
-    float horizontalInput;
-    float verticalInput;
-
-    Vector3 moveDirection;
-
-    Rigidbody rb;
-
+    public enum MovementState { walking, sprinting, crouching, sliding, wallRunning, air }
     public MovementState state;
-    public enum MovementState
-    {
-        walking,
-        sprinting,
-        wallRunning,
-        crouching,
-        sliding,
-        air
-    }
 
-    public bool sliding;
-    public bool wallRunning;
+    [HideInInspector] public bool sliding;
+    [HideInInspector] public bool wallRunning;
 
-    [HideInInspector] public bool wallJumping;
-    private float wallJumpSpeedCap;
+    [HideInInspector] public bool suppressNextJumpInput;
 
-    [Header("Wall Jump Landing Decay")]
-    public float wallJumpLandingDecayTime = 0.25f;
-    private Coroutine wallJumpLandingDecayCoroutine;
+    [Header("Momentum Externo")]
+    public float externalVelocityDrag = 6f;
+    public float maxExternalSpeed = 20f;
+    private Vector3 externalVelocity;
+
+    [HideInInspector] public Vector3 horizontalVelocity;
+
+    [HideInInspector] public float verticalVelocity;
+
+    public bool grounded;
     private bool groundedLastFrame;
-    private Coroutine moveSpeedLerpCoroutine;
+
+    public event System.Action OnJumped;
+
+    private float horizontalInput;
+    private float verticalInput;
+    private float desiredSpeed;
+
+    private float requestedHeight = -1f;
 
     private void Start()
     {
-        rb = GetComponent<Rigidbody>();
-        rb.freezeRotation = true;
+        if (controller == null) controller = GetComponent<CharacterController>();
 
-        readyToJump = true;
-
+        standingHeight = controller.height;
         jumpsRemaining = maxJumps;
-
-        startYScale = transform.localScale.y;
     }
 
     private void Update()
     {
-        grounded = Physics.Raycast(transform.position, Vector3.down, playerHeight * 0.5f + 0.2f, whatIsGround);
-
+        grounded = controller.isGrounded;
         bool justLanded = grounded && !groundedLastFrame;
         groundedLastFrame = grounded;
 
-        // O reset de jumpsRemaining precisa acontecer só no frame exato da
-        // transição pro chão (justLanded), não em todo frame com grounded==true.
-        // Um AddForce(Impulse) de pulo só move o Rigidbody de fato no próximo
-        // passo de física, então por 1+ frame(s) logo após apertar pulo o
-        // raycast de grounded ainda pode continuar batendo no chão — resetando
-        // o jumpsRemaining que você acabou de gastar antes mesmo de sair do
-        // chão, e dando um pulo "extra" fantasma.
         if (justLanded)
-        {
             jumpsRemaining = maxJumps;
 
-            if (wallJumping)
-                StartWallJumpLandingDecay();
-        }
-
         MyInput();
-
         StateHandler();
-        SpeedControl();
 
-        float targetDrag = grounded ? groundDrag : 0f;
-        rb.linearDamping = Mathf.MoveTowards(rb.linearDamping, targetDrag, groundDragRampSpeed * Time.deltaTime);
+        if (!sliding && !wallRunning)
+            UpdateHorizontalVelocity();
+
+        UpdateVerticalVelocity();
     }
 
-    private void FixedUpdate()
+    private void LateUpdate()
     {
-        MovePlayer();
+        externalVelocity = Vector3.MoveTowards(externalVelocity, Vector3.zero, externalVelocityDrag * Time.deltaTime);
+
+        ApplyHeight();
+
+        Vector3 finalMove = horizontalVelocity + externalVelocity + Vector3.up * verticalVelocity;
+        controller.Move(finalMove * Time.deltaTime);
+
+        suppressNextJumpInput = false;
     }
 
     private void MyInput()
@@ -138,26 +121,27 @@ public class PlayerMovementAdvanced : MonoBehaviour
         horizontalInput = Input.GetAxisRaw("Horizontal");
         verticalInput = Input.GetAxisRaw("Vertical");
 
-        if (Input.GetKeyDown(jumpKey) && readyToJump && jumpsRemaining > 0 && !wallRunning)
+        if (Input.GetKeyDown(jumpKey) && readyToJump && jumpsRemaining > 0 && !wallRunning && !suppressNextJumpInput)
         {
             readyToJump = false;
             jumpsRemaining--;
 
-            Jump();
+            verticalVelocity = jumpForce;
+            OnJumped?.Invoke();
 
             Invoke(nameof(ResetJump), jumpCooldown);
         }
 
-        if (Input.GetKeyDown(crouchKey))
-        {
-            transform.localScale = new Vector3(transform.localScale.x, crouchYScale, transform.localScale.z);
-            rb.AddForce(Vector3.down * 5f, ForceMode.Impulse);
-        }
+        if (Input.GetKeyDown(crouchKey) && !sliding)
+            crouching = true;
 
         if (Input.GetKeyUp(crouchKey))
-        {
-            transform.localScale = new Vector3(transform.localScale.x, startYScale, transform.localScale.z);
-        }
+            crouching = false;
+    }
+
+    private void ResetJump()
+    {
+        readyToJump = true;
     }
 
     private void StateHandler()
@@ -165,202 +149,148 @@ public class PlayerMovementAdvanced : MonoBehaviour
         if (wallRunning)
         {
             state = MovementState.wallRunning;
-            desiredMoveSpeed = wallRunSpeed;
+            desiredSpeed = wallRunSpeed;
         }
-
         else if (sliding)
         {
             state = MovementState.sliding;
-
-            if (OnSlope() && rb.linearVelocity.y < 0.1f)
-                desiredMoveSpeed = slideSpeed;
-
-            else
-                desiredMoveSpeed = sprintSpeed;
+            desiredSpeed = slideSpeed;
         }
-
-        else if (Input.GetKey(crouchKey))
+        else if (crouching)
         {
             state = MovementState.crouching;
-            desiredMoveSpeed = crouchSpeed;
+            desiredSpeed = crouchSpeed;
         }
-
-        else if(grounded && !wallRunning && Input.GetKey(sprintKey))
+        else if (grounded && Input.GetKey(sprintKey))
         {
             cam.DoFov(90f);
             state = MovementState.sprinting;
-            desiredMoveSpeed = sprintSpeed;
+            desiredSpeed = sprintSpeed;
         }
-
         else if (grounded)
         {
             cam.DoFov(80f);
             state = MovementState.walking;
-            desiredMoveSpeed = walkSpeed;
+            desiredSpeed = walkSpeed;
         }
-
         else
         {
             state = MovementState.air;
         }
+    }
 
-        if(Mathf.Abs(desiredMoveSpeed - lastDesiredMoveSpeed) > 4f && moveSpeed != 0)
+    private void UpdateHorizontalVelocity()
+    {
+        Vector3 inputDir = (orientation.right * horizontalInput + orientation.forward * verticalInput).normalized;
+
+        if (grounded && OnSlope())
+            inputDir = GetSlopeMoveDirection(inputDir);
+
+        if (!grounded)
         {
-            if (moveSpeedLerpCoroutine != null)
-                StopCoroutine(moveSpeedLerpCoroutine);
-
-            moveSpeedLerpCoroutine = StartCoroutine(SmoothlyLerpMoveSpeed());
+            UpdateAirVelocity(inputDir);
+            return;
         }
+
+        Vector3 target = inputDir * desiredSpeed;
+
+        float rate;
+        if (target.sqrMagnitude < 0.0001f)
+            rate = groundStopDeceleration;
+        else if (target.sqrMagnitude > horizontalVelocity.sqrMagnitude)
+            rate = groundAcceleration;
         else
-        {
-            moveSpeed = desiredMoveSpeed;
-        }
+            rate = groundDeceleration;
 
-        lastDesiredMoveSpeed = desiredMoveSpeed;
+        horizontalVelocity = Vector3.MoveTowards(horizontalVelocity, target, rate * Time.deltaTime);
     }
 
-    private IEnumerator SmoothlyLerpMoveSpeed()
+    private void UpdateAirVelocity(Vector3 inputDir)
     {
-        float time = 0;
-        float difference = Mathf.Abs(desiredMoveSpeed - moveSpeed);
-        float startValue = moveSpeed;
-
-        while (time < difference)
-        {
-            moveSpeed = Mathf.Lerp(startValue, desiredMoveSpeed, time / difference);
-
-            if (OnSlope())
-            {
-                float slopeAngle = Vector3.Angle(Vector3.up, slopeHit.normal);
-                float slopeAngleIncrease = 1 + (slopeAngle / 90f);
-
-                time += Time.deltaTime * speedIncreaseMultiplier * slopeIncreaseMultiplier * slopeAngleIncrease;
-            }
-            else
-                time += Time.deltaTime * speedIncreaseMultiplier;
-
-            yield return null;
-        }
-
-        moveSpeed = desiredMoveSpeed;
-    }
-
-    private void MovePlayer()
-    {
-        if (wallRunning)
+        if (inputDir.sqrMagnitude <= 0.0001f)
             return;
 
-        moveDirection = orientation.forward * verticalInput + orientation.right * horizontalInput;
+        float currentSpeed = horizontalVelocity.magnitude;
+        Vector3 currentDir = currentSpeed > 0.01f ? horizontalVelocity / currentSpeed : inputDir;
 
-        if (OnSlope() && !exitingSlope)
-        {
-            rb.AddForce(GetSlopeMoveDirection(moveDirection) * moveSpeed * 20f, ForceMode.Force);
+        Vector3 newDir = Vector3.Slerp(currentDir, inputDir, airTurnRate * Time.deltaTime).normalized;
 
-            if (rb.linearVelocity.y > 0)
-                rb.AddForce(Vector3.down * 80f, ForceMode.Force);
-        }
+        float newSpeed = currentSpeed < desiredSpeed
+            ? Mathf.MoveTowards(currentSpeed, desiredSpeed, airAcceleration * Time.deltaTime)
+            : currentSpeed;
 
-        else if(grounded)
-            rb.AddForce(moveDirection.normalized * moveSpeed * 10f, ForceMode.Force);
-
-        else if(!grounded)
-            rb.AddForce(moveDirection.normalized * moveSpeed * 10f * airMultiplier, ForceMode.Force);
-
-        rb.useGravity = !OnSlope();
+        horizontalVelocity = newDir * newSpeed;
     }
 
-    private void SpeedControl()
+    private void UpdateVerticalVelocity()
     {
-        if (OnSlope() && !exitingSlope)
-        {
-            if (rb.linearVelocity.magnitude > moveSpeed)
-                rb.linearVelocity = rb.linearVelocity.normalized * moveSpeed;
-        }
+        if (wallRunning) return;
+
+        if (grounded && verticalVelocity < 0f)
+            verticalVelocity = -2f;
         else
-        {
-            Vector3 flatVel = new Vector3(rb.linearVelocity.x, 0f, rb.linearVelocity.z);
-
-            float speedCap = wallJumping ? Mathf.Max(moveSpeed, wallJumpSpeedCap) : moveSpeed;
-
-            if (flatVel.magnitude > speedCap)
-            {
-                Vector3 limitedVel = flatVel.normalized * speedCap;
-                rb.linearVelocity = new Vector3(limitedVel.x, rb.linearVelocity.y, limitedVel.z);
-            }
-        }
+            verticalVelocity += gravity * Time.deltaTime;
     }
 
-    private void Jump()
+    private void ApplyHeight()
     {
-        exitingSlope = true;
+        float crouchHeight = standingHeight * crouchHeightScale;
+        float targetHeight = requestedHeight >= 0f ? requestedHeight : (crouching ? crouchHeight : standingHeight);
 
-        rb.linearVelocity = new Vector3(rb.linearVelocity.x, 0f, rb.linearVelocity.z);
+        if (targetHeight > controller.height && !CanStandUp(targetHeight))
+            targetHeight = controller.height;
 
-        rb.AddForce(transform.up * jumpForce, ForceMode.Impulse);
+        float newHeight = Mathf.MoveTowards(controller.height, targetHeight, crouchTransitionSpeed * Time.deltaTime);
+        float diff = newHeight - controller.height;
+
+        controller.height = newHeight;
+        controller.center += Vector3.up * (diff * 0.5f); // mantém os "pés" fixos enquanto o topo sobe/desce
+
+        requestedHeight = -1f;
     }
-    private void ResetJump()
+
+    private bool CanStandUp(float targetHeight)
     {
-        readyToJump = true;
+        float diff = targetHeight - controller.height;
+        if (diff <= 0.01f) return true;
 
-        exitingSlope = false;
+        Vector3 origin = transform.position + controller.center + Vector3.up * (controller.height * 0.5f);
+        return !Physics.Raycast(origin, Vector3.up, diff + 0.05f, ceilingMask);
     }
 
-    /// <summary>
-    /// Restaura os pulos disponíveis (incluindo o pulo duplo) como se o player
-    /// tivesse tocado o chão. Chamado pelo WallRunningAdvanced ao entrar em um
-    /// wall run, já que pousar numa parede pra correr nela deve "resetar" o
-    /// aéreo do mesmo jeito que pousar no chão reseta.
-    /// </summary>
+    public void RequestHeight(float height)
+    {
+        requestedHeight = height;
+    }
+
     public void RefreshJumps()
     {
         jumpsRemaining = maxJumps;
     }
 
-    public void MarkWallJumping(float momentumCap)
+    public void AddExternalVelocity(Vector3 v)
     {
-        if (wallJumpLandingDecayCoroutine != null)
+        if (v.sqrMagnitude > 0.0001f)
         {
-            StopCoroutine(wallJumpLandingDecayCoroutine);
-            wallJumpLandingDecayCoroutine = null;
+            Vector3 dir = v.normalized;
+            float oppositeComponent = Vector3.Dot(externalVelocity, dir);
+
+            if (oppositeComponent < 0f)
+                externalVelocity -= dir * oppositeComponent; // some só a parte que ia contra o novo chute
         }
 
-        wallJumping = true;
-        wallJumpSpeedCap = momentumCap;
-    }
+        externalVelocity += v;
 
-    private void StartWallJumpLandingDecay()
-    {
-        if (wallJumpLandingDecayCoroutine != null)
-            StopCoroutine(wallJumpLandingDecayCoroutine);
-
-        wallJumpLandingDecayCoroutine = StartCoroutine(WallJumpLandingDecay());
-    }
-
-    private IEnumerator WallJumpLandingDecay()
-    {
-        float startCap = wallJumpSpeedCap;
-        float time = 0f;
-
-        while (time < wallJumpLandingDecayTime)
-        {
-            time += Time.deltaTime;
-            float t = Mathf.Clamp01(time / wallJumpLandingDecayTime);
-
-            wallJumpSpeedCap = Mathf.Lerp(startCap, moveSpeed, t);
-
-            yield return null;
-        }
-
-        wallJumping = false;
-        wallJumpLandingDecayCoroutine = null;
+        if (externalVelocity.magnitude > maxExternalSpeed)
+            externalVelocity = externalVelocity.normalized * maxExternalSpeed;
     }
 
     public bool OnSlope()
     {
-        if(Physics.Raycast(transform.position, Vector3.down, out slopeHit, playerHeight * 0.5f + 0.3f))
+        if (Physics.Raycast(transform.position, Vector3.down, out slopeHit, controller.height * 0.5f + 0.3f))
         {
             float angle = Vector3.Angle(Vector3.up, slopeHit.normal);
-            return angle < maxSlopeAngle && angle != 0;
+            return angle < maxSlopeAngle && angle != 0f;
         }
 
         return false;

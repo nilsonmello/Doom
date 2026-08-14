@@ -7,16 +7,21 @@ public class WallRunningAdvanced : MonoBehaviour
     [Header("Wallrunning")]
     public LayerMask whatIsWall;
     public LayerMask whatIsGround;
-    public float wallRunForce;
-    public float wallJumpUpForce;
-    public float wallJumpSideForce;
-    public float wallClimbSpeed;
-    public float maxWallRunTime;
+    public float wallRunAcceleration = 40f;
+    public float wallRunTurnRate = 8f;
+    public float wallRunGravity = -1.5f;
+    public float wallJumpUpForce = 9f;
+    public float wallJumpSideForce = 9f;
+    public float wallClimbSpeed = 4f;
+    public float maxWallRunTime = 1.5f;
     private float wallRunTimer;
 
-    public float maxWallJumpSpeed = 25f;
+    [Header("Controle Direcional")]
+    [Range(0f, 1f)]
+    public float wallRunSteerInfluence = 0.4f;
+    public float wallStickForce = 12f;
 
-    [Header("Directional Control")]
+    [Header("Wall Jump")]
     [Range(0f, 1f)]
     public float wallJumpLookInfluence = 0.5f;
 
@@ -49,22 +54,16 @@ public class WallRunningAdvanced : MonoBehaviour
     public float wallSwitchDotThreshold = 0.7f;
     private Vector3 lastWallNormal;
 
-    [Header("Gravity")]
-    public bool useGravity;
-    public float gravityCounterForce;
-
     [Header("References")]
     public Transform orientation;
     public PlayerCam cam;
     private PlayerMovementAdvanced pm;
-    private Rigidbody rb;
 
     [Header("UI")]
     public HandUIController handUI;
 
     private void Start()
     {
-        rb = GetComponent<Rigidbody>();
         pm = GetComponent<PlayerMovementAdvanced>();
     }
 
@@ -72,10 +71,7 @@ public class WallRunningAdvanced : MonoBehaviour
     {
         CheckForWall();
         StateMachine();
-    }
 
-    private void FixedUpdate()
-    {
         if (pm.wallRunning)
             WallRunningMovement();
     }
@@ -110,7 +106,7 @@ public class WallRunningAdvanced : MonoBehaviour
             }
         }
 
-        if((wallLeft || wallRight) && verticalInput > 0 && AboveGround() && !exitingWall)
+        if ((wallLeft || wallRight) && verticalInput > 0 && AboveGround() && !exitingWall)
         {
             if (!pm.wallRunning)
                 StartWallRun();
@@ -120,7 +116,7 @@ public class WallRunningAdvanced : MonoBehaviour
             if (wallRunTimer > 0)
                 wallRunTimer -= Time.deltaTime;
 
-            if(wallRunTimer <= 0 && pm.wallRunning)
+            if (wallRunTimer <= 0 && pm.wallRunning)
             {
                 exitingWall = true;
                 exitWallTimer = exitWallTime;
@@ -153,12 +149,8 @@ public class WallRunningAdvanced : MonoBehaviour
         pm.wallRunning = true;
 
         wallRunTimer = maxWallRunTime;
+        pm.verticalVelocity = 0f;
 
-        rb.linearVelocity = new Vector3(rb.linearVelocity.x, 0f, rb.linearVelocity.z);
-
-        // Pousar numa parede pra correr nela conta como "voltar ao chão" pra
-        // efeitos de pulo: restaura o pulo duplo do mesmo jeito que aterrissar
-        // no chão restaura.
         pm.RefreshJumps();
 
         UpdateHandSide();
@@ -178,28 +170,40 @@ public class WallRunningAdvanced : MonoBehaviour
 
     private void WallRunningMovement()
     {
-        rb.useGravity = useGravity;
-
         Vector3 wallNormal = wallRight ? rightWallhit.normal : leftWallhit.normal;
         lastWallNormal = wallNormal;
 
         Vector3 wallForward = Vector3.Cross(wallNormal, transform.up);
-
         if ((orientation.forward - wallForward).magnitude > (orientation.forward - -wallForward).magnitude)
             wallForward = -wallForward;
 
-        rb.AddForce(wallForward * wallRunForce, ForceMode.Force);
+        Vector3 inputDir = orientation.right * horizontalInput + orientation.forward * verticalInput;
+        Vector3 steerTarget = inputDir.sqrMagnitude > 0.01f ? inputDir.normalized : wallForward;
+        Vector3 wishDir = Vector3.Lerp(wallForward, steerTarget, wallRunSteerInfluence);
+
+        wishDir = Vector3.ProjectOnPlane(wishDir, wallNormal).normalized;
+
+        float currentSpeed = pm.horizontalVelocity.magnitude;
+        Vector3 currentDir = currentSpeed > 0.01f ? pm.horizontalVelocity / currentSpeed : wishDir;
+
+        Vector3 newDir = Vector3.Slerp(currentDir, wishDir, wallRunTurnRate * Time.deltaTime).normalized;
+
+        float newSpeed = currentSpeed < pm.wallRunSpeed
+            ? Mathf.MoveTowards(currentSpeed, pm.wallRunSpeed, wallRunAcceleration * Time.deltaTime)
+            : currentSpeed;
+
+        pm.horizontalVelocity = newDir * newSpeed;
+
+        float outwardSpeed = Vector3.Dot(pm.horizontalVelocity, wallNormal);
+        if (outwardSpeed > 0f)
+            pm.horizontalVelocity -= wallNormal * Mathf.Min(outwardSpeed, wallStickForce * Time.deltaTime);
 
         if (upwardsRunning)
-            rb.linearVelocity = new Vector3(rb.linearVelocity.x, wallClimbSpeed, rb.linearVelocity.z);
-        if (downwardsRunning)
-            rb.linearVelocity = new Vector3(rb.linearVelocity.x, -wallClimbSpeed, rb.linearVelocity.z);
-
-        if (!(wallLeft && horizontalInput > 0) && !(wallRight && horizontalInput < 0))
-            rb.AddForce(-wallNormal * 100, ForceMode.Force);
-
-        if (useGravity)
-            rb.AddForce(transform.up * gravityCounterForce, ForceMode.Force);
+            pm.verticalVelocity = wallClimbSpeed;
+        else if (downwardsRunning)
+            pm.verticalVelocity = -wallClimbSpeed;
+        else
+            pm.verticalVelocity += wallRunGravity * Time.deltaTime;
     }
 
     private void StopWallRun()
@@ -218,29 +222,22 @@ public class WallRunningAdvanced : MonoBehaviour
     {
         StopWallRun();
 
+        pm.suppressNextJumpInput = true;
+
         exitingWall = true;
         exitWallTimer = exitWallTime;
-
-        pm.wallRunning = false;
 
         Vector3 wallNormal = wallRight ? rightWallhit.normal : leftWallhit.normal;
         lastWallNormal = wallNormal;
 
-        Vector3 preservedFlatVelocity = new Vector3(rb.linearVelocity.x, 0f, rb.linearVelocity.z);
+        Vector3 wallNormalFlat = new Vector3(wallNormal.x, 0f, wallNormal.z).normalized;
+        Vector3 lookFlat = new Vector3(orientation.forward.x, 0f, orientation.forward.z);
+        Vector3 kickDir = lookFlat.sqrMagnitude > 0.001f
+            ? Vector3.Slerp(wallNormalFlat, lookFlat.normalized, wallJumpLookInfluence).normalized
+            : wallNormalFlat;
 
-        Vector3 sideBoost = new Vector3(wallNormal.x, 0f, wallNormal.z) * wallJumpSideForce / rb.mass;
-        float upBoost = wallJumpUpForce / rb.mass;
-
-        Vector3 finalFlatVelocity = preservedFlatVelocity + sideBoost;
-
-        rb.linearVelocity = new Vector3(finalFlatVelocity.x, upBoost, finalFlatVelocity.z);
-
-        float cappedMomentum = Mathf.Min(finalFlatVelocity.magnitude, maxWallJumpSpeed);
-
-        pm.MarkWallJumping(cappedMomentum);
-
-        if (handUI != null)
-            handUI.SetWallrun(HandUIController.WallSide.None);
+        pm.AddExternalVelocity(kickDir * wallJumpSideForce);
+        pm.verticalVelocity = wallJumpUpForce;
     }
 
     private void UpdateHandSide()

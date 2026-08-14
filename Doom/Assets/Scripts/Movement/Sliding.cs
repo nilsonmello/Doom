@@ -7,16 +7,16 @@ public class Sliding : MonoBehaviour
     [Header("References")]
     public Transform orientation;
     public Transform playerObj;
-    private Rigidbody rb;
     private PlayerMovementAdvanced pm;
 
     [Header("Sliding")]
-    public float maxSlideTime;
-    public float slideForce;
+    public float maxSlideTime = 0.8f;
+    public float slideDrag = 8f;
+    public float slideSteerAcceleration = 5f;
     private float slideTimer;
 
-    public float slideYScale;
-    private float startYScale;
+    [Header("Altura do Collider Durante o Slide")]
+    public float slideHeight = 1f;
 
     [Header("Input")]
     public KeyCode slideKey = KeyCode.LeftControl;
@@ -27,14 +27,24 @@ public class Sliding : MonoBehaviour
     public float slideBufferTime = 0.15f;
     private float slideBufferTimer;
 
+    [Header("Cancelamento por Pulo")]
+    public float jumpCancelSpeedCap = -1f;
+
     public PlayerCam cam;
+
+    private float originalStepOffset;
 
     private void Start()
     {
-        rb = GetComponent<Rigidbody>();
         pm = GetComponent<PlayerMovementAdvanced>();
+        pm.OnJumped += HandleJumped;
+        originalStepOffset = pm.controller.stepOffset;
+    }
 
-        startYScale = playerObj.localScale.y;
+    private void OnDestroy()
+    {
+        if (pm != null)
+            pm.OnJumped -= HandleJumped;
     }
 
     private void Update()
@@ -42,7 +52,15 @@ public class Sliding : MonoBehaviour
         horizontalInput = Input.GetAxisRaw("Horizontal");
         verticalInput = Input.GetAxisRaw("Vertical");
 
-        if (Input.GetKeyDown(slideKey))
+        HandleSlideInput();
+
+        if (pm.sliding)
+            SlidingMovement();
+    }
+
+    private void HandleSlideInput()
+    {
+        if (Input.GetKeyDown(slideKey) && !pm.sliding)
         {
             if (pm.grounded && (horizontalInput != 0 || verticalInput != 0))
             {
@@ -64,46 +82,53 @@ public class Sliding : MonoBehaviour
                 slideBufferTimer = 0f;
             }
         }
-
-        if (pm.sliding && !Input.GetKey(slideKey))
-            StopSlide();
     }
 
-    private void FixedUpdate()
+    private void HandleJumped()
     {
-        if (pm.sliding)
-            SlidingMovement();
+        if (!pm.sliding) return;
+
+        StopSlide();
+
+        float cap = jumpCancelSpeedCap > 0f ? jumpCancelSpeedCap : pm.sprintSpeed;
+        float speed = pm.horizontalVelocity.magnitude;
+        if (speed > cap)
+            pm.horizontalVelocity = pm.horizontalVelocity.normalized * cap;
     }
 
     private void StartSlide()
     {
         pm.sliding = true;
 
+        pm.controller.stepOffset = 0f;
+
         cam.DoFov(100f);
 
-        playerObj.localScale = new Vector3(playerObj.localScale.x, slideYScale, playerObj.localScale.z);
-        rb.AddForce(Vector3.down * 5f, ForceMode.Impulse);
-
         slideTimer = maxSlideTime;
+
+        Vector3 flatForward = orientation.forward;
+        flatForward.y = 0f;
+
+        pm.horizontalVelocity = flatForward.normalized * pm.slideSpeed;
     }
 
     private void SlidingMovement()
     {
-        Vector3 inputDirection = orientation.forward * verticalInput + orientation.right * horizontalInput;
+        pm.RequestHeight(slideHeight);
 
-        if(!pm.OnSlope() || rb.linearVelocity.y > -0.1f)
+        Vector3 inputDir = (orientation.right * horizontalInput + orientation.forward * verticalInput).normalized;
+
+        if (inputDir.sqrMagnitude > 0.001f)
         {
-            rb.AddForce(inputDirection.normalized * slideForce, ForceMode.Force);
-
-            slideTimer -= Time.deltaTime;
+            Vector3 steeredTarget = inputDir * pm.horizontalVelocity.magnitude;
+            pm.horizontalVelocity = Vector3.MoveTowards(pm.horizontalVelocity, steeredTarget, slideSteerAcceleration * Time.deltaTime);
         }
 
-        else
-        {
-            rb.AddForce(pm.GetSlopeMoveDirection(inputDirection) * slideForce, ForceMode.Force);
-        }
+        pm.horizontalVelocity = Vector3.MoveTowards(pm.horizontalVelocity, Vector3.zero, slideDrag * Time.deltaTime);
 
-        if (slideTimer <= 0)
+        slideTimer -= Time.deltaTime;
+
+        if (slideTimer <= 0f)
             StopSlide();
     }
 
@@ -111,7 +136,8 @@ public class Sliding : MonoBehaviour
     {
         pm.sliding = false;
 
+        pm.controller.stepOffset = originalStepOffset;
+
         cam.DoFov(80f);
-        playerObj.localScale = new Vector3(playerObj.localScale.x, startYScale, playerObj.localScale.z);
     }
 }

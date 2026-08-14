@@ -741,7 +741,6 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 4778346212662433101}
-  - component: {fileID: 6837969160966420890}
   - component: {fileID: 5344845444717488424}
   - component: {fileID: 7715962456744351848}
   - component: {fileID: 1826361821868554508}
@@ -749,6 +748,7 @@ GameObject:
   - component: {fileID: 6441823658215137605}
   - component: {fileID: 8270997746266938794}
   - component: {fileID: 1944660362040876184}
+  - component: {fileID: 7222383737736101393}
   m_Layer: 0
   m_Name: Player
   m_TagString: Player
@@ -778,33 +778,6 @@ Transform:
   - {fileID: 2931500644154857156}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!54 &6837969160966420890
-Rigidbody:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8546829206222525260}
-  serializedVersion: 5
-  m_Mass: 1
-  m_LinearDamping: 0
-  m_AngularDamping: 0.05
-  m_CenterOfMass: {x: 0, y: 0, z: 0}
-  m_InertiaTensor: {x: 1, y: 1, z: 1}
-  m_InertiaRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ImplicitCom: 1
-  m_ImplicitTensor: 1
-  m_UseGravity: 1
-  m_IsKinematic: 0
-  m_Interpolate: 1
-  m_Constraints: 0
-  m_CollisionDetection: 1
 --- !u!114 &5344845444717488424
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -820,10 +793,12 @@ MonoBehaviour:
   orientation: {fileID: 7953793975859107019}
   playerObj: {fileID: 4778346212662433101}
   maxSlideTime: 0.75
-  slideForce: 500
-  slideYScale: 0.7
+  slideDrag: 8
+  slideSteerAcceleration: 5
+  slideHeight: 1
   slideKey: 306
   slideBufferTime: 0.15
+  jumpCancelSpeedCap: -1
   cam: {fileID: 8570857974166206768}
 --- !u!114 &7715962456744351848
 MonoBehaviour:
@@ -837,36 +812,41 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8afb1b74fdd58724fa758c6e25982889, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerMovementAdvanced
-  walkSpeed: 5
-  sprintSpeed: 8
-  slideSpeed: 8
-  wallRunSpeed: 5
-  speedIncreaseMultiplier: 20
-  slopeIncreaseMultiplier: 2
-  groundDrag: 1
-  groundDragRampSpeed: 15
-  jumpForce: 5
-  jumpCooldown: 0.2
-  airMultiplier: 1
-  maxJumps: 1
-  crouchSpeed: 2
-  crouchYScale: 0.5
-  jumpKey: 32
-  sprintKey: 304
-  crouchKey: 99
-  playerHeight: 2
-  whatIsGround:
-    serializedVersion: 2
-    m_Bits: 8
-  grounded: 0
-  maxSlopeAngle: 40
+  controller: {fileID: 0}
   cam: {fileID: 8570857974166206768}
   orientation: {fileID: 7953793975859107019}
+  walkSpeed: 7
+  sprintSpeed: 10
+  crouchSpeed: 2
+  wallRunSpeed: 25
+  slideSpeed: 50
+  groundAcceleration: 45
+  groundDeceleration: 55
+  groundStopDeceleration: 40
+  airAcceleration: 20
+  airTurnRate: 6
+  gravity: -25
+  jumpForce: 12
+  jumpCooldown: 0.2
+  maxJumps: 2
+  crouchKey: 99
+  crouchHeightScale: 0.5
+  crouchTransitionSpeed: 10
+  ceilingMask:
+    serializedVersion: 2
+    m_Bits: 256
+  crouching: 0
+  maxSlopeAngle: 40
+  jumpKey: 32
+  sprintKey: 304
   state: 0
   sliding: 0
   wallRunning: 0
-  wallJumping: 0
-  wallJumpLandingDecayTime: 0.25
+  externalVelocityDrag: 6
+  maxExternalSpeed: 20
+  horizontalVelocity: {x: 0, y: 0, z: 0}
+  verticalVelocity: 0
+  grounded: 0
 --- !u!114 &1826361821868554508
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -885,12 +865,15 @@ MonoBehaviour:
   whatIsGround:
     serializedVersion: 2
     m_Bits: 8
-  wallRunForce: 450
+  wallRunAcceleration: 40
+  wallRunTurnRate: 8
+  wallRunGravity: -1.5
   wallJumpUpForce: 6
   wallJumpSideForce: 10
   wallClimbSpeed: 0
   maxWallRunTime: 2
-  maxWallJumpSpeed: 25
+  wallRunSteerInfluence: 0.4
+  wallStickForce: 12
   wallJumpLookInfluence: 0.579
   wallRunCameraOffset: 0.2
   jumpKey: 32
@@ -900,8 +883,6 @@ MonoBehaviour:
   minJumpHeight: 2
   exitWallTime: 0.8
   wallSwitchDotThreshold: 0.7
-  useGravity: 0
-  gravityCounterForce: 0
   orientation: {fileID: 7953793975859107019}
   cam: {fileID: 8570857974166206768}
   handUI: {fileID: 4799645542046097620}
@@ -1032,6 +1013,31 @@ MonoBehaviour:
   chargeShakeIntensity: 0.02
   debugMode: 1
   shieldProtectionAngle: 100
+--- !u!143 &7222383737736101393
+CharacterController:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8546829206222525260}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Height: 2
+  m_Radius: 0.5
+  m_SlopeLimit: 45
+  m_StepOffset: 0.3
+  m_SkinWidth: 0.08
+  m_MinMoveDistance: 0.001
+  m_Center: {x: 0, y: 0, z: 0}
 --- !u!1 &8729898313895847808
 GameObject:
   m_ObjectHideFlags: 0

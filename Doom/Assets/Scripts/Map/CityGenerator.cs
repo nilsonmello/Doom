@@ -146,7 +146,6 @@ public class CityGenerator : MonoBehaviour
         {
             if (chosen >= spawnPlazaCount) break;
 
-            // Praça nunca no perímetro — senão a "muralha natural" fica com um buraco.
             if (IsPerimeterLeaf(leaf)) continue;
 
             leaf.isPlaza = true;
@@ -181,9 +180,6 @@ public class CityGenerator : MonoBehaviour
             availableW = Mathf.Min(availableW, leaf.bounds.width);
             availableH = Mathf.Min(availableH, leaf.bounds.height);
 
-            // Fator de silhueta independente por eixo: encolhe o footprint ainda mais
-            // dentro da área já reservada pra rua, gerando torres com proporções variadas
-            // (finas, alongadas) em vez de blocos quadrados preenchendo o quarteirão inteiro.
             float ratioX = (float)(rng.NextDouble() * (maxFootprintRatio - minFootprintRatio) + minFootprintRatio);
             float ratioZ = (float)(rng.NextDouble() * (maxFootprintRatio - minFootprintRatio) + minFootprintRatio);
 
@@ -214,12 +210,6 @@ public class CityGenerator : MonoBehaviour
 
     public List<BuildingLot> GetBuildings() => buildings;
 
-    /// <summary>
-    /// Se o quarteirão mínimo não tiver espaço suficiente pra caber o footprint mínimo do
-    /// prédio MAIS a rua ao redor, o clamp do footprint acaba comendo a rua inteira em
-    /// alguns quarteirões (prédios colados sem passagem). Isso avisa no Console antes
-    /// de você descobrir isso olhando o mapa gerado.
-    /// </summary>
     private void WarnIfStreetsMightClose()
     {
         int recommendedMinLeaf = minBuildingFootprint + Mathf.CeilToInt(streetWidth) + 2;
