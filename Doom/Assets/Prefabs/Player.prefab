@@ -823,8 +823,9 @@ MonoBehaviour:
   groundAcceleration: 45
   groundDeceleration: 55
   groundStopDeceleration: 40
+  groundTurnRate: 25
   airAcceleration: 20
-  airTurnRate: 6
+  airTurnRate: 20
   gravity: -25
   jumpForce: 12
   jumpCooldown: 0.2
@@ -842,7 +843,8 @@ MonoBehaviour:
   state: 0
   sliding: 0
   wallRunning: 0
-  externalVelocityDrag: 6
+  suppressNextJumpInput: 0
+  externalVelocityDrag: 80
   maxExternalSpeed: 20
   horizontalVelocity: {x: 0, y: 0, z: 0}
   verticalVelocity: 0
@@ -882,7 +884,7 @@ MonoBehaviour:
   wallCheckDistance: 0.7
   minJumpHeight: 2
   exitWallTime: 0.8
-  wallSwitchDotThreshold: 0.7
+  wallSwitchDistance: 2.5
   orientation: {fileID: 7953793975859107019}
   cam: {fileID: 8570857974166206768}
   handUI: {fileID: 4799645542046097620}
