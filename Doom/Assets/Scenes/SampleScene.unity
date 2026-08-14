@@ -131,7 +131,7 @@ GameObject:
   - component: {fileID: 403246232}
   - component: {fileID: 403246231}
   m_Layer: 0
-  m_Name: Cube
+  m_Name: City
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -149,7 +149,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0576b471d842f7b429a74af54bc46129, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GridGenerator
-  prefabs: []
+  prefabs:
+  - {fileID: 7734097051388308096, guid: ae635ea64afb4554090be29f9bc75d65, type: 3}
+  - {fileID: 7734097051388308096, guid: 42e2c03e0aab6a8488732de88b47f1b2, type: 3}
+  - {fileID: 7734097051388308096, guid: 336cb2e6a4d84104d9b40c2fd7df15d6, type: 3}
   columns: 10
   rows: 10
   spacing: 60
@@ -323,6 +326,11 @@ MonoBehaviour:
   m_ShadowLayerMask: 1
   m_RenderingLayers: 1
   m_ShadowRenderingLayers: 1
+--- !u!143 &699067304 stripped
+CharacterController:
+  m_CorrespondingSourceObject: {fileID: 7222383737736101393, guid: aa430c5a8dda9a14ab492b6f649bb481, type: 3}
+  m_PrefabInstance: {fileID: 750473696}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1001 &750473696
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -331,6 +339,22 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 1826361821868554508, guid: aa430c5a8dda9a14ab492b6f649bb481, type: 3}
+      propertyPath: controller
+      value: 
+      objectReference: {fileID: 699067304}
+    - target: {fileID: 1826361821868554508, guid: aa430c5a8dda9a14ab492b6f649bb481, type: 3}
+      propertyPath: maxWallRunTime
+      value: 60000
+      objectReference: {fileID: 0}
+    - target: {fileID: 1826361821868554508, guid: aa430c5a8dda9a14ab492b6f649bb481, type: 3}
+      propertyPath: wallJumpUpForce
+      value: 15
+      objectReference: {fileID: 0}
+    - target: {fileID: 1826361821868554508, guid: aa430c5a8dda9a14ab492b6f649bb481, type: 3}
+      propertyPath: wallJumpSideForce
+      value: 25
+      objectReference: {fileID: 0}
     - target: {fileID: 4778346212662433101, guid: aa430c5a8dda9a14ab492b6f649bb481, type: 3}
       propertyPath: m_LocalPosition.x
       value: 7.98674
@@ -370,6 +394,46 @@ PrefabInstance:
     - target: {fileID: 4778346212662433101, guid: aa430c5a8dda9a14ab492b6f649bb481, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7715962456744351848, guid: aa430c5a8dda9a14ab492b6f649bb481, type: 3}
+      propertyPath: handUI
+      value: 
+      objectReference: {fileID: 964862658}
+    - target: {fileID: 7715962456744351848, guid: aa430c5a8dda9a14ab492b6f649bb481, type: 3}
+      propertyPath: walkSpeed
+      value: 10
+      objectReference: {fileID: 0}
+    - target: {fileID: 7715962456744351848, guid: aa430c5a8dda9a14ab492b6f649bb481, type: 3}
+      propertyPath: controller
+      value: 
+      objectReference: {fileID: 699067304}
+    - target: {fileID: 7715962456744351848, guid: aa430c5a8dda9a14ab492b6f649bb481, type: 3}
+      propertyPath: airTurnRate
+      value: 15
+      objectReference: {fileID: 0}
+    - target: {fileID: 7715962456744351848, guid: aa430c5a8dda9a14ab492b6f649bb481, type: 3}
+      propertyPath: sprintSpeed
+      value: 15
+      objectReference: {fileID: 0}
+    - target: {fileID: 7715962456744351848, guid: aa430c5a8dda9a14ab492b6f649bb481, type: 3}
+      propertyPath: wallRunSpeed
+      value: 30
+      objectReference: {fileID: 0}
+    - target: {fileID: 7715962456744351848, guid: aa430c5a8dda9a14ab492b6f649bb481, type: 3}
+      propertyPath: groundTurnRate
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 7715962456744351848, guid: aa430c5a8dda9a14ab492b6f649bb481, type: 3}
+      propertyPath: airAcceleration
+      value: 50
+      objectReference: {fileID: 0}
+    - target: {fileID: 7715962456744351848, guid: aa430c5a8dda9a14ab492b6f649bb481, type: 3}
+      propertyPath: whatIsWall.m_Bits
+      value: 64
+      objectReference: {fileID: 0}
+    - target: {fileID: 7715962456744351848, guid: aa430c5a8dda9a14ab492b6f649bb481, type: 3}
+      propertyPath: whatIsGround.m_Bits
+      value: 8
       objectReference: {fileID: 0}
     - target: {fileID: 8546829206222525260, guid: aa430c5a8dda9a14ab492b6f649bb481, type: 3}
       propertyPath: m_Name
@@ -429,6 +493,17 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &964862658 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 4799645542046097620, guid: aa430c5a8dda9a14ab492b6f649bb481, type: 3}
+  m_PrefabInstance: {fileID: 750473696}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: dba79feced57b664db269a9f52c6ff85, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::HandUIController
 --- !u!1 &1521499156
 GameObject:
   m_ObjectHideFlags: 0

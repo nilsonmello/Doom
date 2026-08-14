@@ -21,6 +21,7 @@ public class PlayerMovementAdvanced : MonoBehaviour
     public float groundAcceleration = 45f;
     public float groundDeceleration = 55f;
     public float groundStopDeceleration = 40f;
+    public float groundTurnRate = 25f;
     public float airAcceleration = 20f;
     public float airTurnRate = 6f;
 
@@ -192,17 +193,21 @@ public class PlayerMovementAdvanced : MonoBehaviour
             return;
         }
 
-        Vector3 target = inputDir * desiredSpeed;
+        if (inputDir.sqrMagnitude < 0.0001f)
+        {
+            horizontalVelocity = Vector3.MoveTowards(horizontalVelocity, Vector3.zero, groundStopDeceleration * Time.deltaTime);
+            return;
+        }
 
-        float rate;
-        if (target.sqrMagnitude < 0.0001f)
-            rate = groundStopDeceleration;
-        else if (target.sqrMagnitude > horizontalVelocity.sqrMagnitude)
-            rate = groundAcceleration;
-        else
-            rate = groundDeceleration;
+        float currentSpeed = horizontalVelocity.magnitude;
+        Vector3 currentDir = currentSpeed > 0.01f ? horizontalVelocity / currentSpeed : inputDir;
 
-        horizontalVelocity = Vector3.MoveTowards(horizontalVelocity, target, rate * Time.deltaTime);
+        Vector3 newDir = Vector3.Slerp(currentDir, inputDir, groundTurnRate * Time.deltaTime).normalized;
+
+        float rate = desiredSpeed > currentSpeed ? groundAcceleration : groundDeceleration;
+        float newSpeed = Mathf.MoveTowards(currentSpeed, desiredSpeed, rate * Time.deltaTime);
+
+        horizontalVelocity = newDir * newSpeed;
     }
 
     private void UpdateAirVelocity(Vector3 inputDir)
@@ -244,7 +249,7 @@ public class PlayerMovementAdvanced : MonoBehaviour
         float diff = newHeight - controller.height;
 
         controller.height = newHeight;
-        controller.center += Vector3.up * (diff * 0.5f); // mantém os "pés" fixos enquanto o topo sobe/desce
+        controller.center += Vector3.up * (diff * 0.5f);
 
         requestedHeight = -1f;
     }
@@ -276,13 +281,20 @@ public class PlayerMovementAdvanced : MonoBehaviour
             float oppositeComponent = Vector3.Dot(externalVelocity, dir);
 
             if (oppositeComponent < 0f)
-                externalVelocity -= dir * oppositeComponent; // some só a parte que ia contra o novo chute
+                externalVelocity -= dir * oppositeComponent;
         }
 
         externalVelocity += v;
 
         if (externalVelocity.magnitude > maxExternalSpeed)
             externalVelocity = externalVelocity.normalized * maxExternalSpeed;
+    }
+
+    public void DampExternalVelocityAlongNormal(Vector3 normal, float maxDelta = Mathf.Infinity)
+    {
+        float outward = Vector3.Dot(externalVelocity, normal);
+        if (outward > 0f)
+            externalVelocity -= normal * Mathf.Min(outward, maxDelta);
     }
 
     public bool OnSlope()

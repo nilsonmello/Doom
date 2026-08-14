@@ -51,8 +51,10 @@ public class WallRunningAdvanced : MonoBehaviour
     private float exitWallTimer;
 
     [Header("Wall Switching")]
-    public float wallSwitchDotThreshold = 0.7f;
+    private Collider lastWallCollider;
     private Vector3 lastWallNormal;
+    private Vector3 lastWallPoint;
+    public float wallSwitchDistance = 2.5f;
 
     [Header("References")]
     public Transform orientation;
@@ -97,9 +99,17 @@ public class WallRunningAdvanced : MonoBehaviour
 
         if (exitingWall && (wallLeft || wallRight))
         {
-            Vector3 currentWallNormal = wallRight ? rightWallhit.normal : leftWallhit.normal;
+            RaycastHit currentWallHit = wallRight ? rightWallhit : leftWallhit;
+            Collider currentWallCollider = currentWallHit.collider;
+            Vector3 currentWallNormal = currentWallHit.normal;
 
-            if (Vector3.Dot(currentWallNormal, lastWallNormal) < wallSwitchDotThreshold)
+            bool sameWall = currentWallCollider == lastWallCollider
+                && Vector3.Angle(currentWallNormal, lastWallNormal) < 20f
+                && Vector3.Distance(currentWallHit.point, lastWallPoint) < wallSwitchDistance;
+
+            bool graceMostlyElapsed = exitWallTimer <= exitWallTime * 0.5f;
+
+            if (!sameWall || graceMostlyElapsed)
             {
                 exitingWall = false;
                 exitWallTimer = 0f;
@@ -151,6 +161,16 @@ public class WallRunningAdvanced : MonoBehaviour
         wallRunTimer = maxWallRunTime;
         pm.verticalVelocity = 0f;
 
+        Vector3 startWallNormal = wallRight ? rightWallhit.normal : leftWallhit.normal;
+
+        float speedBeforeAttach = pm.horizontalVelocity.magnitude;
+        Vector3 tangential = Vector3.ProjectOnPlane(pm.horizontalVelocity, startWallNormal);
+
+        if (tangential.sqrMagnitude > 0.0001f)
+            pm.horizontalVelocity = tangential.normalized * speedBeforeAttach;
+
+        pm.DampExternalVelocityAlongNormal(startWallNormal);
+
         pm.RefreshJumps();
 
         UpdateHandSide();
@@ -171,7 +191,6 @@ public class WallRunningAdvanced : MonoBehaviour
     private void WallRunningMovement()
     {
         Vector3 wallNormal = wallRight ? rightWallhit.normal : leftWallhit.normal;
-        lastWallNormal = wallNormal;
 
         Vector3 wallForward = Vector3.Cross(wallNormal, transform.up);
         if ((orientation.forward - wallForward).magnitude > (orientation.forward - -wallForward).magnitude)
@@ -197,6 +216,8 @@ public class WallRunningAdvanced : MonoBehaviour
         float outwardSpeed = Vector3.Dot(pm.horizontalVelocity, wallNormal);
         if (outwardSpeed > 0f)
             pm.horizontalVelocity -= wallNormal * Mathf.Min(outwardSpeed, wallStickForce * Time.deltaTime);
+
+        pm.DampExternalVelocityAlongNormal(wallNormal, wallStickForce * Time.deltaTime);
 
         if (upwardsRunning)
             pm.verticalVelocity = wallClimbSpeed;
@@ -227,8 +248,11 @@ public class WallRunningAdvanced : MonoBehaviour
         exitingWall = true;
         exitWallTimer = exitWallTime;
 
-        Vector3 wallNormal = wallRight ? rightWallhit.normal : leftWallhit.normal;
+        RaycastHit wallHit = wallRight ? rightWallhit : leftWallhit;
+        Vector3 wallNormal = wallHit.normal;
+        lastWallCollider = wallHit.collider;
         lastWallNormal = wallNormal;
+        lastWallPoint = wallHit.point;
 
         Vector3 wallNormalFlat = new Vector3(wallNormal.x, 0f, wallNormal.z).normalized;
         Vector3 lookFlat = new Vector3(orientation.forward.x, 0f, orientation.forward.z);
