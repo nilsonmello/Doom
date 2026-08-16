@@ -818,7 +818,7 @@ MonoBehaviour:
   walkSpeed: 12
   sprintSpeed: 18
   crouchSpeed: 2
-  wallRunSpeed: 25
+  wallRunSpeed: 45
   slideSpeed: 50
   groundAcceleration: 45
   groundDeceleration: 55
