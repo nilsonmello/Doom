@@ -7,35 +7,29 @@ public class CityGenerator : MonoBehaviour
     public int mapWidth = 120;
     public int mapHeight = 120;
 
-    [Header("Configuração do BSP (tamanho dos quarteirões)")]
+    [Header("Configuração do BSP")]
     public int minLeafSize = 10;
     public int maxLeafSize = 22;
 
     [Header("Ruas")]
-    [Tooltip("Largura da rua entre prédios, em células de grid. Calibre isso contra o wallCheckDistance do WallRunningAdvanced — a rua precisa ser estreita o bastante pra ambas as paredes serem detectadas ao mesmo tempo.")]
     public float streetWidth = 3f;
     public int minBuildingFootprint = 4;
 
-    [Header("Altura dos Prédios (interior)")]
-    [Tooltip("Altura totalmente aleatória por prédio dentro dessa faixa — sem padrão de skyline.")]
+    [Header("Altura dos Prédios")]
     public float minBuildingHeight = 6f;
     public float maxBuildingHeight = 40f;
 
     [Header("Silhueta dos Prédios")]
-    [Tooltip("Quanto do quarteirão (já descontando a rua) o footprint do prédio realmente ocupa, por eixo. 1 = preenche tudo (bloco largo). Valores menores + altura maior = torres finas e altas.")]
     [Range(0.1f, 1f)] public float minFootprintRatio = 0.5f;
     [Range(0.1f, 1f)] public float maxFootprintRatio = 0.85f;
 
     [Header("Muralha de Perímetro")]
-    [Tooltip("Espessura da faixa nas bordas do mapa (em células) que vira a 'muralha natural' de prédios altos e colados.")]
     public int perimeterThickness = 14;
-    [Tooltip("Largura de rua nas bordas — bem menor que a interna, pra deixar os prédios praticamente colados uns nos outros.")]
     public float perimeterStreetWidth = 1f;
     public float perimeterMinHeight = 70f;
     public float perimeterMaxHeight = 100f;
 
     [Header("Praça de Spawn")]
-    [Tooltip("Quantos quarteirões centrais viram praça aberta (sem prédio), garantindo espaço livre pro spawn do player.")]
     public int spawnPlazaCount = 1;
 
     public struct BuildingLot
@@ -213,14 +207,5 @@ public class CityGenerator : MonoBehaviour
     private void WarnIfStreetsMightClose()
     {
         int recommendedMinLeaf = minBuildingFootprint + Mathf.CeilToInt(streetWidth) + 2;
-
-        if (minLeafSize < recommendedMinLeaf)
-        {
-            Debug.LogWarning(
-                $"[CityGenerator] minLeafSize ({minLeafSize}) está baixo demais pra " +
-                $"minBuildingFootprint ({minBuildingFootprint}) + streetWidth ({streetWidth}). " +
-                $"Isso pode fechar ruas em alguns quarteirões. Recomendado: minLeafSize >= {recommendedMinLeaf}."
-            );
-        }
     }
 }

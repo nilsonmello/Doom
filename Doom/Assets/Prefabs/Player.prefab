@@ -812,11 +812,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8afb1b74fdd58724fa758c6e25982889, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerMovementAdvanced
-  controller: {fileID: 0}
+  controller: {fileID: 7222383737736101393}
   cam: {fileID: 8570857974166206768}
   orientation: {fileID: 7953793975859107019}
-  walkSpeed: 7
-  sprintSpeed: 10
+  walkSpeed: 12
+  sprintSpeed: 18
   crouchSpeed: 2
   wallRunSpeed: 25
   slideSpeed: 50
@@ -827,7 +827,7 @@ MonoBehaviour:
   airAcceleration: 20
   airTurnRate: 20
   gravity: -25
-  jumpForce: 12
+  jumpForce: 15
   jumpCooldown: 0.2
   maxJumps: 2
   crouchKey: 99
@@ -870,8 +870,8 @@ MonoBehaviour:
   wallRunAcceleration: 40
   wallRunTurnRate: 8
   wallRunGravity: -1.5
-  wallJumpUpForce: 6
-  wallJumpSideForce: 10
+  wallJumpUpForce: 15
+  wallJumpSideForce: 18
   wallClimbSpeed: 0
   maxWallRunTime: 2
   wallRunSteerInfluence: 0.4

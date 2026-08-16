@@ -1,4 +1,5 @@
 using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.AI;
 
@@ -34,9 +35,7 @@ public class EnemyAI : MonoBehaviour, IDamageable
     public float deathDelay = 2f;
 
     [Header("Dano")]
-    [Tooltip("Sprite exibido rapidamente quando o inimigo toma dano.")]
     public Sprite hitSprite;
-    [Tooltip("Duração em segundos que o sprite de dano fica visível antes de voltar ao normal.")]
     public float hitFlashDuration = 0.1f;
 
     [Header("Captura")]
@@ -76,11 +75,6 @@ public class EnemyAI : MonoBehaviour, IDamageable
     public bool IsHeld => isHeld;
     public bool CanBlockDamage => catchBehavior != null && catchBehavior.BlocksDamage;
 
-    /// <summary>
-    /// True enquanto o flash de dano estiver ativo. Sistemas externos (como animações
-    /// de ataque) devem checar isso antes de escrever sprites, pra não perder frames
-    /// silenciosamente via SetSprite.
-    /// </summary>
     public bool IsHitFlashing => isHitFlashing;
 
     public event System.Action<Collider, RaycastHit> OnThrowImpact;
@@ -130,7 +124,11 @@ public class EnemyAI : MonoBehaviour, IDamageable
         switch (currentState)
         {
             case State.Idle:
-                if (distToPlayer <= sightRange && HasLineOfSight())
+                bool dentroDoAlcance = distToPlayer <= sightRange;
+                bool temLinhaDeVisao = HasLineOfSight();
+
+
+                if (dentroDoAlcance && temLinhaDeVisao)
                     SetState(State.Chase);
                 break;
 
@@ -333,10 +331,16 @@ public class EnemyAI : MonoBehaviour, IDamageable
     private bool HasLineOfSight()
     {
         Vector3 dir = player.position - transform.position;
+
         if (Physics.Raycast(transform.position, dir.normalized, out RaycastHit hit, sightRange, obstacleMask))
         {
+            Debug.DrawLine(transform.position, hit.point, Color.red, 0.1f);
+
             return false;
         }
+
+        Debug.DrawLine(transform.position, player.position, Color.green, 0.1f);
+
         return true;
     }
 
@@ -361,11 +365,6 @@ public class EnemyAI : MonoBehaviour, IDamageable
             SetSprite(idleSprite);
     }
 
-    /// <summary>
-    /// Ponto único de escrita no spriteRenderer. Sistemas externos (como o ataque)
-    /// devem chamar isso em vez de escrever direto no spriteRenderer, pra respeitar
-    /// a prioridade do flash de dano.
-    /// </summary>
     public void SetSprite(Sprite sprite)
     {
         if (spriteRenderer == null || sprite == null) return;
@@ -374,10 +373,6 @@ public class EnemyAI : MonoBehaviour, IDamageable
         spriteRenderer.sprite = sprite;
     }
 
-    /// <summary>
-    /// Volta o sprite pro idle. Útil pra ser chamado por comportamentos externos
-    /// (como o de ataque) quando terminam sua própria animação.
-    /// </summary>
     public void ReturnToIdleSprite()
     {
         if (idleSprite != null)

@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 public class GridGenerator : MonoBehaviour
@@ -19,8 +20,10 @@ public class GridGenerator : MonoBehaviour
     [SerializeField] private bool excluirAleatoriamente = false;
     [Range(0f, 1f)]
     [SerializeField] private float chanceDeExclusao = 0.2f;
+
+    [Header("Seed")]
     [SerializeField] private int seed = 0;
-    [SerializeField] private bool usarSeedFixa = false;
+    [SerializeField] private bool useFixedSeed = false;
 
     private void Start()
     {
@@ -33,7 +36,6 @@ public class GridGenerator : MonoBehaviour
     {
         if (prefabs == null || prefabs.Length == 0)
         {
-            Debug.LogWarning("GridGenerator: nenhum prefab atribuído no array.");
             return;
         }
 
@@ -48,8 +50,8 @@ public class GridGenerator : MonoBehaviour
             ? new Vector3(larguraTotal / 2f, 0f, profundidadeTotal / 2f)
             : Vector3.zero;
 
-        System.Collections.Generic.List<GameObject> instanciasGeradas = new System.Collections.Generic.List<GameObject>();
-        System.Random rng = usarSeedFixa ? new System.Random(seed) : new System.Random();
+        List<GameObject> instanciasGeradas = new List<GameObject>();
+        System.Random rng = ProceduralUtils.CreateRng(ref seed, useFixedSeed);
 
         for (int linha = 0; linha < rows; linha++)
         {
@@ -58,8 +60,12 @@ public class GridGenerator : MonoBehaviour
                 Vector3 posicaoLocal = new Vector3(coluna * spacing, 0f, linha * spacing) - offset;
                 Vector3 posicaoMundo = container.position + posicaoLocal;
 
-                GameObject prefabEscolhido = prefabs[rng.Next(prefabs.Length)];
-                GameObject instancia = Instantiate(prefabEscolhido, posicaoMundo, Quaternion.identity, container);
+                GameObject instancia = ProceduralUtils.SpawnRandom(
+                    prefabs, posicaoMundo, Quaternion.identity, container, rng,
+                    out GameObject prefabEscolhido);
+
+                if (instancia == null) continue;
+
                 instancia.name = $"{prefabEscolhido.name}_{linha}_{coluna}";
                 instanciasGeradas.Add(instancia);
             }
@@ -69,7 +75,7 @@ public class GridGenerator : MonoBehaviour
             AplicarExclusaoAleatoria(instanciasGeradas, rng);
     }
 
-    private void AplicarExclusaoAleatoria(System.Collections.Generic.List<GameObject> instancias, System.Random rng)
+    private void AplicarExclusaoAleatoria(List<GameObject> instancias, System.Random rng)
     {
         for (int i = instancias.Count - 1; i >= 0; i--)
         {
@@ -89,15 +95,7 @@ public class GridGenerator : MonoBehaviour
     public void LimparGrid()
     {
         Transform container = parentContainer != null ? parentContainer : transform;
-
-        for (int i = container.childCount - 1; i >= 0; i--)
-        {
-            Transform filho = container.GetChild(i);
-            if (Application.isPlaying)
-                Destroy(filho.gameObject);
-            else
-                DestroyImmediate(filho.gameObject);
-        }
+        ProceduralUtils.ClearChildren(container);
     }
 
     private void OnDrawGizmosSelected()
