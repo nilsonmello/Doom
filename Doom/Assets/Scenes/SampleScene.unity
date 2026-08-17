@@ -442,7 +442,7 @@ MonoBehaviour:
   playerPrefab: {fileID: 8546829206222525260, guid: aa430c5a8dda9a14ab492b6f649bb481, type: 3}
   enemyPrefabs:
   - {fileID: 418949808057078175, guid: bee1c31e406896942a4f5a9c232c5aa1, type: 3}
-  enemyCount: 1
+  enemyCount: 50
   enemyMinDistanceFromSpawn: 1
   enemySpawnHeightOffset: 5.6
   cellSize: 8
