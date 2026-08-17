@@ -64,6 +64,10 @@ public class WallRunningAdvanced : MonoBehaviour
     [Header("UI")]
     public HandUIController handUI;
 
+    [Header("Debug")]
+    public bool debugSpeedLogging = true;
+    private float lastLoggedSpeed = -1f;
+
     private void Start()
     {
         pm = GetComponent<PlayerMovementAdvanced>();
@@ -167,7 +171,17 @@ public class WallRunningAdvanced : MonoBehaviour
         Vector3 tangential = Vector3.ProjectOnPlane(pm.horizontalVelocity, startWallNormal);
 
         if (tangential.sqrMagnitude > 0.0001f)
+        {
             pm.horizontalVelocity = tangential.normalized * speedBeforeAttach;
+        }
+        else
+        {
+            Vector3 fallbackForward = Vector3.Cross(startWallNormal, transform.up);
+            if (Vector3.Dot(fallbackForward, orientation.forward) < 0f)
+                fallbackForward = -fallbackForward;
+
+            pm.horizontalVelocity = fallbackForward.normalized * speedBeforeAttach;
+        }
 
         pm.DampExternalVelocityAlongNormal(startWallNormal);
 
@@ -214,8 +228,21 @@ public class WallRunningAdvanced : MonoBehaviour
         pm.horizontalVelocity = newDir * newSpeed;
 
         float outwardSpeed = Vector3.Dot(pm.horizontalVelocity, wallNormal);
+        float preTrimMagnitude = pm.horizontalVelocity.magnitude;
+
         if (outwardSpeed > 0f)
             pm.horizontalVelocity -= wallNormal * Mathf.Min(outwardSpeed, wallStickForce * Time.deltaTime);
+
+        if (debugSpeedLogging)
+        {
+            float postTrimMagnitude = pm.horizontalVelocity.magnitude;
+            float lost = preTrimMagnitude - postTrimMagnitude;
+
+            if (lastLoggedSpeed < 0f || Mathf.Abs(postTrimMagnitude - lastLoggedSpeed) > 0.05f || lost > 0.01f)
+            {
+                lastLoggedSpeed = postTrimMagnitude;
+            }
+        }
 
         pm.DampExternalVelocityAlongNormal(wallNormal, wallStickForce * Time.deltaTime);
 

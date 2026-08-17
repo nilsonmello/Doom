@@ -79,6 +79,10 @@ public class PlayerMovementAdvanced : MonoBehaviour
 
     private float requestedHeight = -1f;
 
+    [Header("Debug")]
+    public bool debugSpeedLogging = true;
+    private float lastLoggedGroundAirSpeed = -1f;
+
     private void Start()
     {
         if (controller == null) controller = GetComponent<CharacterController>();
@@ -91,6 +95,8 @@ public class PlayerMovementAdvanced : MonoBehaviour
     {
         grounded = controller.isGrounded;
         bool justLanded = grounded && !groundedLastFrame;
+        bool justLeftGround = !grounded && groundedLastFrame;
+
         groundedLastFrame = grounded;
 
         if (justLanded)
@@ -147,6 +153,8 @@ public class PlayerMovementAdvanced : MonoBehaviour
 
     private void StateHandler()
     {
+        MovementState previousState = state;
+
         if (wallRunning)
         {
             state = MovementState.wallRunning;
@@ -195,7 +203,21 @@ public class PlayerMovementAdvanced : MonoBehaviour
 
         if (inputDir.sqrMagnitude < 0.0001f)
         {
-            horizontalVelocity = Vector3.MoveTowards(horizontalVelocity, Vector3.zero, groundStopDeceleration * Time.deltaTime);
+            float beforeStop = horizontalVelocity.magnitude;
+
+            float stopThreshold = walkSpeed * 1.5f;
+
+            if (beforeStop > stopThreshold)
+            {
+                float floorSpeed = Mathf.Max(sprintSpeed, walkSpeed);
+                float stoppedSpeed = Mathf.MoveTowards(beforeStop, floorSpeed, groundStopDeceleration * Time.deltaTime);
+                horizontalVelocity = horizontalVelocity.normalized * stoppedSpeed;
+            }
+            else
+            {
+                horizontalVelocity = Vector3.MoveTowards(horizontalVelocity, Vector3.zero, groundStopDeceleration * Time.deltaTime);
+            }
+
             return;
         }
 
@@ -208,6 +230,12 @@ public class PlayerMovementAdvanced : MonoBehaviour
         float newSpeed = Mathf.MoveTowards(currentSpeed, desiredSpeed, rate * Time.deltaTime);
 
         horizontalVelocity = newDir * newSpeed;
+
+        if (debugSpeedLogging)
+        {
+            bool decelerating = rate == groundDeceleration;
+            float delta = currentSpeed - newSpeed;
+        }
     }
 
     private void UpdateAirVelocity(Vector3 inputDir)
