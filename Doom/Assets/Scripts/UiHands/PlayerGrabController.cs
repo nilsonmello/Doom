@@ -80,7 +80,7 @@ public class PlayerGrabController : MonoBehaviour
         {
             handUI = GetComponent<HandUIController>();
             if (handUI == null) handUI = GetComponentInParent<HandUIController>();
-            if (handUI == null) handUI = FindObjectOfType<HandUIController>();
+            if (handUI == null) handUI = FindFirstObjectByType<HandUIController>();
         }
 
         if (playerMovement == null)

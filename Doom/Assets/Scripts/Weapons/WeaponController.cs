@@ -59,7 +59,7 @@ public class WeaponController : MonoBehaviour
         {
             handUI = GetComponent<HandUIController>();
             if (handUI == null) handUI = GetComponentInParent<HandUIController>();
-            if (handUI == null) handUI = FindObjectOfType<HandUIController>();
+            if (handUI == null) handUI = FindFirstObjectByType<HandUIController>();
         }
 
         if (audioSource == null)

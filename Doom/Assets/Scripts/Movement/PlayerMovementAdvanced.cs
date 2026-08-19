@@ -81,7 +81,7 @@ public class PlayerMovementAdvanced : MonoBehaviour
 
     [Header("Debug")]
     public bool debugSpeedLogging = true;
-    private float lastLoggedGroundAirSpeed = -1f;
+    //private float lastLoggedGroundAirSpeed = -1f;
 
     private void Start()
     {

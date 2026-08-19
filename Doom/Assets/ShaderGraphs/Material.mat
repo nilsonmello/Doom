@@ -59,11 +59,11 @@ Material:
         m_Offset: {x: 0, y: 0}
     m_Ints: []
     m_Floats:
-    - _FinishAngle: 0.33
+    - _FinishAngle: 0.31
     - _Float: 0
     - _QueueControl: 0
     - _QueueOffset: 0
-    - _StartAngle: 0.19
+    - _StartAngle: 0.21
     - _Xoffset: -1
     - _fillAmount: 0
     - _glowIntensity: 0
@@ -71,7 +71,7 @@ Material:
     - _trailAmount: -0.03
     - _xOffset: -1
     m_Colors:
-    - _FrameColor: {r: 1, g: 0, b: 0, a: 1}
+    - _FrameColor: {r: 0.9056604, g: 0.9056604, b: 0.9056604, a: 1}
     - _Min_Max: {r: 1, g: 0, b: 0, a: 0}
     - _Pos: {r: 0.21, g: 0, b: 0, a: 0}
     - _Vector2: {r: -1, g: 0, b: 0, a: 0}
